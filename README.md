@@ -1,1 +1,1 @@
-Bug fix patch for FlatPlus1
+Launch liltoon's color correction function from VRC's ExpressionMenu
