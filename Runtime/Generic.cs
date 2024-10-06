@@ -182,5 +182,23 @@ namespace com.github.pandrabox.unlimitedcolor.runtime
             Thumbsup
         }
         public const int GESTURENUM = 8;
+
+
+        public static string FindPathRecursive(Transform root, Transform child)
+        {
+            if (root == child) return "";
+
+            List<string> pathSegments = new List<string>();
+            while (child != root && child != null)
+            {
+                pathSegments.Add(child.name);
+                child = child.parent;
+            }
+
+            if (child == null && root != null) return null;
+
+            pathSegments.Reverse();
+            return String.Join("/", pathSegments);
+        }
     }
 }
