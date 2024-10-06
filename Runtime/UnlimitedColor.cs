@@ -1,5 +1,6 @@
 ﻿
 #if UNITY_EDITOR
+using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
@@ -9,9 +10,16 @@ namespace com.github.pandrabox.unlimitedcolor.runtime
     [AddComponentMenu("Pan/UnlimitedColor")]
     public class UnlimitedColor : MonoBehaviour, VRC.SDKBase.IEditorOnly
     {
+        public bool FixMAMBT;
+        public float SaturationMax, ValueMax, GammaMax;
+
         public RendererGroup[] RendererGroups;
         public UnlimitedColor()
         {
+            FixMAMBT = true;
+            SaturationMax = 2;
+            ValueMax = 2;
+            GammaMax = 2;
             RendererGroups = new RendererGroup[1];
         }
     }
@@ -20,9 +28,24 @@ namespace com.github.pandrabox.unlimitedcolor.runtime
     [CustomEditor(typeof(UnlimitedColor))]
     public class UnlimitedColorEditor : Editor
     {
+        private bool showExMenu = false;
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
+
+
+            showExMenu = EditorGUILayout.Toggle("Show Advanced Menu", showExMenu);
+            if (showExMenu)
+            {
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("FixMAMBT"));
+                EditorGUILayout.HelpBox("本アセットは内部的にModular Avatar Merge Blend Treeを使っています。これはFXの一番上にレイヤを作成するため、MMD等にずれが生じます。ここのチェックボックスをONすると、そのズレを抑制します。多くの場合ONでいいはずですが、既にMerge BlendTreeが最初であることを前提して作成しているアバターの場合異常動作の原因となりますので、チェックを外して下さい。", MessageType.Info);
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("SaturationMax"));
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("ValueMax"));
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("GammaMax"));
+                EditorGUILayout.HelpBox("彩度(S)、明度(V)、ガンマ(G)はLiltoonのGUI上において最大値が2で制限されており、本アセットも基本はその値を上限にしています。システム上はそれより大きい値の設定も可能です。大きくしすぎるとノイズ増加や操作操作感悪化につながるため、変更には注意して下さい。", MessageType.Info);
+            }
+
+
             var rendererGroupsProperty = serializedObject.FindProperty("RendererGroups");
 
             // Buttons for adding and removing RendererGroups
@@ -57,7 +80,7 @@ namespace com.github.pandrabox.unlimitedcolor.runtime
                 EditorGUILayout.PropertyField(groupProperty, new GUIContent($"Group {i + 1}"));
 
             }
-
+            EditorGUILayout.HelpBox("デフォルトでは全てのRendererを独立して色変更できるようになり、非常に多くのパラメータを消費します。色変更が不要なものはOutOfTargetグループに登録して下さい。同時に色を変えたいものはグループを作成して登録して下さい。グループ名・オブジェクト名は重複しないよう注意して下さい。", MessageType.Info);
             serializedObject.ApplyModifiedProperties();
         }
     }

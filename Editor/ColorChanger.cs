@@ -69,6 +69,10 @@ namespace com.github.pandrabox.unlimitedcolor.editor
                 new ColorParam("Gamma", "ガンマ")
             };
             Run();
+            if (Target.FixMAMBT)
+            {
+                GenMAMBTFixPrefab();
+            }
         }
         public void Run()
         {
@@ -95,6 +99,14 @@ namespace com.github.pandrabox.unlimitedcolor.editor
                 //未定義の個別チェンジャー
                 MakeUnitColorChanger(renderer.name, "", RenderersToPaths(new Renderer[1] { renderer }));
             }
+        }
+
+
+        private void GenMAMBTFixPrefab()
+        {
+            var obj = new GameObject("FixMAMBT");
+            obj.transform.SetParent(Target.transform);
+            obj.AddComponent<MAMBTFix>();
         }
 
         public string[] RenderersToPaths(Renderer[] renderers)
@@ -189,8 +201,12 @@ namespace com.github.pandrabox.unlimitedcolor.editor
             }
 
             //MAパラメータの定義
-            var MAP = UnitColorChangerObj.AddComponent<ModularAvatarParameters>();
-            MAP.parameters = new List<ParameterConfig>();
+            ModularAvatarParameters MAP = UnitColorChangerObj.GetComponent<ModularAvatarParameters>();
+            if (MAP == null)
+            {
+                MAP = UnitColorChangerObj.AddComponent<ModularAvatarParameters>();
+                MAP.parameters = new List<ParameterConfig>();
+            }
             foreach (var colorParam in ColorParams)
             {
                 MAP.parameters.Add(new ParameterConfig() { nameOrPrefix = $@"{suffix}/{colorParam.eng}", syncType = ParameterSyncType.Float, saved = true, localOnly = true, defaultValue = 0.5f });
@@ -202,18 +218,18 @@ namespace com.github.pandrabox.unlimitedcolor.editor
             var ac = new AnimationClipsBuilder(ProjectFolder);
             foreach (var obj in TargetObjNames)
             {
-                ac.Name($@"{safeName}Hue-1").Curve(obj, typeof(SkinnedMeshRenderer), "material._MainTexHSVG.x").Keys(0, -.5f);
-                ac.Name($@"{safeName}Hue0").Curve(obj, typeof(SkinnedMeshRenderer), "material._MainTexHSVG.x").Keys(0, 0);
-                ac.Name($@"{safeName}Hue1").Curve(obj, typeof(SkinnedMeshRenderer), "material._MainTexHSVG.x").Keys(0, .5f);
-                ac.Name($@"{safeName}Saturation-1").Curve(obj, typeof(SkinnedMeshRenderer), "material._MainTexHSVG.y").Keys(0, 0);
-                ac.Name($@"{safeName}Saturation0").Curve(obj, typeof(SkinnedMeshRenderer), "material._MainTexHSVG.y").Keys(0, 1);
-                ac.Name($@"{safeName}Saturation1").Curve(obj, typeof(SkinnedMeshRenderer), "material._MainTexHSVG.y").Keys(0, 5);
-                ac.Name($@"{safeName}Value-1").Curve(obj, typeof(SkinnedMeshRenderer), "material._MainTexHSVG.z").Keys(0, 0);
-                ac.Name($@"{safeName}Value0").Curve(obj, typeof(SkinnedMeshRenderer), "material._MainTexHSVG.z").Keys(0, 1);
-                ac.Name($@"{safeName}Value1").Curve(obj, typeof(SkinnedMeshRenderer), "material._MainTexHSVG.z").Keys(0, 2);
-                ac.Name($@"{safeName}Gamma-1").Curve(obj, typeof(SkinnedMeshRenderer), "material._MainTexHSVG.w").Keys(0, 0.01f);
-                ac.Name($@"{safeName}Gamma0").Curve(obj, typeof(SkinnedMeshRenderer), "material._MainTexHSVG.w").Keys(0, 1);
-                ac.Name($@"{safeName}Gamma1").Curve(obj, typeof(SkinnedMeshRenderer), "material._MainTexHSVG.w").Keys(0, 7);
+                ac.Name($@"{safeName}Hue-1").Curve(obj, typeof(Renderer), "material._MainTexHSVG.x").Keys(0, -.5f);
+                ac.Name($@"{safeName}Hue0").Curve(obj, typeof(Renderer), "material._MainTexHSVG.x").Keys(0, 0);
+                ac.Name($@"{safeName}Hue1").Curve(obj, typeof(Renderer), "material._MainTexHSVG.x").Keys(0, .5f);
+                ac.Name($@"{safeName}Saturation-1").Curve(obj, typeof(Renderer), "material._MainTexHSVG.y").Keys(0, 0);
+                ac.Name($@"{safeName}Saturation0").Curve(obj, typeof(Renderer), "material._MainTexHSVG.y").Keys(0, 1);
+                ac.Name($@"{safeName}Saturation1").Curve(obj, typeof(Renderer), "material._MainTexHSVG.y").Keys(0, Target.SaturationMax);
+                ac.Name($@"{safeName}Value-1").Curve(obj, typeof(Renderer), "material._MainTexHSVG.z").Keys(0, 0);
+                ac.Name($@"{safeName}Value0").Curve(obj, typeof(Renderer), "material._MainTexHSVG.z").Keys(0, 1);
+                ac.Name($@"{safeName}Value1").Curve(obj, typeof(Renderer), "material._MainTexHSVG.z").Keys(0, Target.ValueMax);
+                ac.Name($@"{safeName}Gamma-1").Curve(obj, typeof(Renderer), "material._MainTexHSVG.w").Keys(0, 0.01f);
+                ac.Name($@"{safeName}Gamma0").Curve(obj, typeof(Renderer), "material._MainTexHSVG.w").Keys(0, 1);
+                ac.Name($@"{safeName}Gamma1").Curve(obj, typeof(Renderer), "material._MainTexHSVG.w").Keys(0, Target.GammaMax);
             }
             if (DEBUGMODE)
             {

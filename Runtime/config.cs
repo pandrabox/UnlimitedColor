@@ -10,7 +10,7 @@ namespace com.github.pandrabox.unlimitedcolor.runtime
 {
     public static class config
     {
-        public const bool DEBUGMODE = true;
+        public const bool DEBUGMODE = false;
         private const string DEBUGOUTPFOLDER = "Assets/pandrabox/Debug/";
 
         public static string DebugOutpFolder
