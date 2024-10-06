@@ -33,6 +33,17 @@ namespace com.github.pandrabox.unlimitedcolor.editor
         }
     }
 
+    public class ColorParam
+    {
+        public string eng;
+        public string jp;
+
+        public ColorParam(string eng, string jp)
+        {
+            this.eng = eng;
+            this.jp = jp;
+        }
+    }
     /// <summary>
     /// Actual operation
     /// </summary>
@@ -41,26 +52,24 @@ namespace com.github.pandrabox.unlimitedcolor.editor
         public string ProjectFolder = "Assets/Pan/ClothManager/ColorChanger";
         public GameObject AvatarRoot;
         public List<string> ResolvedColorType;
+        public ColorParam[] ColorParams;
         public ColorChangerMain(GameObject Target)
         {
             AvatarRoot = FindComponentFromParent<VRCAvatarDescriptor>(Target).gameObject;
+            ColorParams = new ColorParam[]
+            {
+                new ColorParam("Hue", "色相"),
+                new ColorParam("Saturation", "彩度"),
+                new ColorParam("Value", "明度"),
+                new ColorParam("Gamma", "ガンマ")
+            };
             Run();
         }
         public void Run()
         {
             ResolvedColorType = new List<string>();
             string[] Items = new string[] { "Body", "hair", "hone" };
-            MakeUnitColorChanger($@"pandra/Color", "T", Items);
-            //MakeUnitColorChanger("BodyColor", "Body", new string[] { "Body", "karada", "mohu" });
-            //FCMCloth[] FCMCloths = AvatarRoot.GetComponentsInChildren<FCMCloth>(true);
-            //var uniqueTypes = FCMCloths.Select(c => c.Type).Distinct().ToArray(); 
-            //foreach (var type in uniqueTypes)
-            //{
-            //    string[] ColorTypes = FCMCloths.Where(c => c.Type == type).Select(c=>c.ColorType).Distinct().ToArray();
-            //    string ColorType = ColorTypes[ColorTypes.Length - 1];
-            //    string[] Items = FCMCloths.Where(c => c.ColorType == ColorType).Select(c => c.Path()).ToArray();
-            //    MakeUnitColorChanger($@"{type}/Color", ColorType, Items);
-            //}
+            MakeUnitColorChanger($@"C", "T", Items);
         }
 
         public void MakeUnitColorChanger(string TypeName, string ColorType, string[] TargetObjNames)
@@ -68,17 +77,17 @@ namespace com.github.pandrabox.unlimitedcolor.editor
             //ルートオブジェクトNDMFColorChangerの作成（ただの枠）
             var ColorChangerRoot = ReCreateObject(AvatarRoot, "NDMFColorChanger");
             //FlatsClothオブジェクトを直下に作成（後でマージするため着せ替えと同じ名称ツリーにする）
-            var DummyFCM = GetOrCreateObject(ColorChangerRoot, "FlatsCloth", (GameObject x) =>
+            var DummyFCM = GetOrCreateObject(ColorChangerRoot, "UnlimitedColor", (GameObject x) =>
             {
                 x.AddComponent<ModularAvatarMenuInstaller>();
                 var CCRM = x.AddComponent<ModularAvatarMenuItem>();
-                CCRM.Control.name = "FlatsCloth";
+                CCRM.Control.name = "UnlimitedColor";
                 CCRM.Control.type = ControlType.SubMenu;
                 //CCRM.Control.icon = AssetDatabase.LoadAssetAtPath<Texture2D>($@"{ProjectFolder}/FlatsClothManager/ClothManager.png");
                 CCRM.MenuSource = SubmenuSource.Children;
             });
 
-            //実動作を仕舞う入れ物の作成（スラッシュ区切りで階層と名称を指定、後で中に「色合い(Hue,Gamma)」と「明るさ(BrightNess,Saturation)」を入れる
+            //実動作を仕舞う入れ物の作成（スラッシュ区切りで階層と名称を指定、後で中に「色合い(Hue,Gamma)」と「明るさ(Value,Saturation)」を入れる
             GameObject CurrentObj = null, UnitColorChangerObj = null;
             var NameHierarchy = TypeName.Split('/');
             for (var n = 0; n < NameHierarchy.Length; n++)
@@ -92,45 +101,30 @@ namespace com.github.pandrabox.unlimitedcolor.editor
                 UnitColorChangerObj = CurrentObj;
             }
 
-            //実動作を呼ぶスイッチ1
-            //var suffix = $@"{ProjectFolder.Replace("Assets/", "")}/{ColorType}";
-            var suffix = $@"Pan/UnlimitedColor/{ColorType}";
-            var HueGammaObj = GetOrCreateObject(UnitColorChangerObj, "色合い");
-            var HueGammaMenu = HueGammaObj.AddComponent<ModularAvatarMenuItem>();
-            HueGammaMenu.Control.name = HueGammaObj.name;
-            HueGammaMenu.Control.type = ControlType.TwoAxisPuppet;
-            // HueGammaMenu.Control.icon = AssetDatabase.LoadAssetAtPath<Texture2D>($@"{ProjectFolder}/Ico/Color1.png");
-            var CurrentParameter = new Parameter[2];
-            CurrentParameter[0] = new Parameter() { name = $@"{suffix}/Hue" };
-            CurrentParameter[1] = new Parameter() { name = $@"{suffix}/Gamma" };
-            HueGammaMenu.Control.subParameters = CurrentParameter;
 
-            //実動作を呼ぶスイッチ2
-            var BrightSaturationObj = GetOrCreateObject(UnitColorChangerObj, "明るさ");
-            var BrightSaturationMenu = BrightSaturationObj.AddComponent<ModularAvatarMenuItem>();
-            BrightSaturationMenu.Control.name = BrightSaturationObj.name;
-            BrightSaturationMenu.Control.type = ControlType.TwoAxisPuppet;
-            // BrightSaturationMenu.Control.icon = AssetDatabase.LoadAssetAtPath<Texture2D>($@"{ProjectFolder}/Ico/Color2.png");
-            var CurrentParameter2 = new Parameter[2];
-            CurrentParameter2[0] = new Parameter() { name = $@"{suffix}/BrightNess" };
-            CurrentParameter2[1] = new Parameter() { name = $@"{suffix}/Saturation" };
-            BrightSaturationMenu.Control.subParameters = CurrentParameter2;
+            //実動作を呼ぶスイッチ1
+            var suffix = $@"Pan/UnlimitedColor/{ColorType}";
+            foreach(var colorParam in ColorParams)
+            {
+                var obj = GetOrCreateObject(UnitColorChangerObj, colorParam.jp);
+                var menu = obj.AddComponent<ModularAvatarMenuItem>();
+                menu.Control.type = ControlType.RadialPuppet;
+                // HueGammaMenu.Control.icon = AssetDatabase.LoadAssetAtPath<Texture2D>($@"{ProjectFolder}/Ico/Color1.png");
+                var CurrentParameter = new Parameter[1];
+                CurrentParameter[0] = new Parameter() { name = $@"{suffix}/{colorParam.eng}" };
+                menu.Control.subParameters = CurrentParameter;
+            }
 
             if (!ResolvedColorType.Contains(ColorType))
             {
                 ResolvedColorType.Add(ColorType);
                 //MAパラメータの定義
-                string[] ColorParams = { "Hue", "BrightNess", "Saturation", "Gamma" };
                 var MAP = UnitColorChangerObj.AddComponent<ModularAvatarParameters>();
                 MAP.parameters = new List<ParameterConfig>();
-                //List<string> LateSyncParam = new List<string>();
-                foreach (var c in ColorParams)
+                foreach (var colorParam in ColorParams)
                 {
-                    MAP.parameters.Add(new ParameterConfig() { nameOrPrefix = $@"{suffix}/{c}", syncType = ParameterSyncType.Float, saved = true ,localOnly=true });
-                    //LateSyncParam.Add($@"{suffix}/{c}");
+                    MAP.parameters.Add(new ParameterConfig() { nameOrPrefix = $@"{suffix}/{colorParam.eng}", syncType = ParameterSyncType.Float, saved = true ,localOnly=true, defaultValue=0.5f });
                 }
-                //var LateSync = UnitColorChangerObj.AddComponent<ExLateSync>();
-                //LateSync.SyncParamName = LateSyncParam.ToArray();
 
                 //アニメとDBTの定義
                 var ac = new AnimationClipsBuilder(ProjectFolder);
@@ -139,12 +133,12 @@ namespace com.github.pandrabox.unlimitedcolor.editor
                     ac.Name($@"{ColorType}Hue-1").Curve(obj, typeof(SkinnedMeshRenderer), "material._MainTexHSVG.x").Keys(0, -.5f);
                     ac.Name($@"{ColorType}Hue0").Curve(obj, typeof(SkinnedMeshRenderer), "material._MainTexHSVG.x").Keys(0, 0);
                     ac.Name($@"{ColorType}Hue1").Curve(obj, typeof(SkinnedMeshRenderer), "material._MainTexHSVG.x").Keys(0, .5f);
-                    ac.Name($@"{ColorType}BrightNess-1").Curve(obj, typeof(SkinnedMeshRenderer), "material._MainTexHSVG.y").Keys(0, 0);
-                    ac.Name($@"{ColorType}BrightNess0").Curve(obj, typeof(SkinnedMeshRenderer), "material._MainTexHSVG.y").Keys(0, 1);
-                    ac.Name($@"{ColorType}BrightNess1").Curve(obj, typeof(SkinnedMeshRenderer), "material._MainTexHSVG.y").Keys(0, 2);
-                    ac.Name($@"{ColorType}Saturation-1").Curve(obj, typeof(SkinnedMeshRenderer), "material._MainTexHSVG.z").Keys(0, 0);
-                    ac.Name($@"{ColorType}Saturation0").Curve(obj, typeof(SkinnedMeshRenderer), "material._MainTexHSVG.z").Keys(0, 1);
-                    ac.Name($@"{ColorType}Saturation1").Curve(obj, typeof(SkinnedMeshRenderer), "material._MainTexHSVG.z").Keys(0, 5);
+                    ac.Name($@"{ColorType}Saturation-1").Curve(obj, typeof(SkinnedMeshRenderer), "material._MainTexHSVG.y").Keys(0, 0);
+                    ac.Name($@"{ColorType}Saturation0").Curve(obj, typeof(SkinnedMeshRenderer), "material._MainTexHSVG.y").Keys(0, 1);
+                    ac.Name($@"{ColorType}Saturation1").Curve(obj, typeof(SkinnedMeshRenderer), "material._MainTexHSVG.y").Keys(0, 5);
+                    ac.Name($@"{ColorType}Value-1").Curve(obj, typeof(SkinnedMeshRenderer), "material._MainTexHSVG.z").Keys(0, 0);
+                    ac.Name($@"{ColorType}Value0").Curve(obj, typeof(SkinnedMeshRenderer), "material._MainTexHSVG.z").Keys(0, 1);
+                    ac.Name($@"{ColorType}Value1").Curve(obj, typeof(SkinnedMeshRenderer), "material._MainTexHSVG.z").Keys(0, 2);
                     ac.Name($@"{ColorType}Gamma-1").Curve(obj, typeof(SkinnedMeshRenderer), "material._MainTexHSVG.w").Keys(0, 0.01f);
                     ac.Name($@"{ColorType}Gamma0").Curve(obj, typeof(SkinnedMeshRenderer), "material._MainTexHSVG.w").Keys(0, 1);
                     ac.Name($@"{ColorType}Gamma1").Curve(obj, typeof(SkinnedMeshRenderer), "material._MainTexHSVG.w").Keys(0, 7);
@@ -163,13 +157,13 @@ namespace com.github.pandrabox.unlimitedcolor.editor
                 var bb = new BlendTreeBuilderForNDMF(ProjectFolder, UnitColorChangerObj);
                 bb.rootDBT(() =>
                 {
-                    foreach (var param in ColorParams)
+                    foreach (var colorParam in ColorParams)
                     {
-                        bb.Param("1").Add1D($@"Pan/UnlimitedColor/{ColorType}/{param}", () =>
+                        bb.Param("1").Add1D($@"Pan/UnlimitedColor/{ColorType}/{colorParam.eng}", () =>
                         {
-                            for (int n = -1; n < 2; n++)
+                            for (int n = -1; n <= 1; n++)
                             {
-                                bb.Param(n).CM(ac.Clip($@"{ColorType}{param}{n}"));
+                                bb.Param(((float)n+1)/2).CM(ac.Clip($@"{ColorType}{colorParam.eng}{n}"));
                             }
                         });
                     }
