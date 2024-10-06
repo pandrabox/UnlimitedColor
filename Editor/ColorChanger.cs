@@ -10,6 +10,8 @@ using static VRC.SDKBase.Networking;
 using static com.github.pandrabox.unlimitedcolor.runtime.Generic;
 using static com.github.pandrabox.unlimitedcolor.runtime.Generic_Dev;
 using VRC.SDK3.Avatars.Components;
+using static com.github.pandrabox.unlimitedcolor.runtime.config;
+using System.IO;
 
 //[assembly: ExportsPlugin(typeof(ColorChangerPass))]
 
@@ -48,7 +50,7 @@ namespace com.github.pandrabox.unlimitedcolor.editor
         {
             ResolvedColorType = new List<string>();
             string[] Items = new string[] { "body", "hair", "hone" };
-            MakeUnitColorChanger($@"pandra/Color", "myTest", Items);
+            MakeUnitColorChanger($@"pandra/Color", "T", Items);
             //MakeUnitColorChanger("BodyColor", "Body", new string[] { "Body", "karada", "mohu" });
             //FCMCloth[] FCMCloths = AvatarRoot.GetComponentsInChildren<FCMCloth>(true);
             //var uniqueTypes = FCMCloths.Select(c => c.Type).Distinct().ToArray(); 
@@ -64,7 +66,7 @@ namespace com.github.pandrabox.unlimitedcolor.editor
         public void MakeUnitColorChanger(string TypeName, string ColorType, string[] TargetObjNames)
         {
             //ルートオブジェクトNDMFColorChangerの作成（ただの枠）
-            var ColorChangerRoot = GetOrCreateObject(AvatarRoot, "NDMFColorChanger");
+            var ColorChangerRoot = ReCreateObject(AvatarRoot, "NDMFColorChanger");
             //FlatsClothオブジェクトを直下に作成（後でマージするため着せ替えと同じ名称ツリーにする）
             var DummyFCM = GetOrCreateObject(ColorChangerRoot, "FlatsCloth", (GameObject x) =>
             {
@@ -146,6 +148,17 @@ namespace com.github.pandrabox.unlimitedcolor.editor
                     ac.Name($@"{ColorType}Gamma-1").Curve(obj, typeof(SkinnedMeshRenderer), "material._MainTexHSVG.w").Keys(0, 0.01f);
                     ac.Name($@"{ColorType}Gamma0").Curve(obj, typeof(SkinnedMeshRenderer), "material._MainTexHSVG.w").Keys(0, 1);
                     ac.Name($@"{ColorType}Gamma1").Curve(obj, typeof(SkinnedMeshRenderer), "material._MainTexHSVG.w").Keys(0, 7);
+                }
+                if (DEBUGMODE)
+                {
+                    foreach(var unitClip in ac.AnimationClips)
+                    {
+                        string ClipPath = Path.Combine(DebugOutpFolder, $"{unitClip.Key}.anim");
+                        if (!File.Exists(ClipPath))
+                        {
+                            AssetDatabase.CreateAsset(unitClip.Value.Outp(), ClipPath);
+                        }
+                    }
                 }
                 var bb = new BlendTreeBuilderForNDMF(ProjectFolder, UnitColorChangerObj);
                 bb.rootDBT(() =>

@@ -4,6 +4,7 @@ using UnityEditor.Animations;
 using System;
 using System.Collections.Generic;
 using nadena.dev.modular_avatar.core;
+using static com.github.pandrabox.unlimitedcolor.runtime.config;
 
 namespace com.github.pandrabox.unlimitedcolor.editor
 {
@@ -28,6 +29,10 @@ namespace com.github.pandrabox.unlimitedcolor.editor
             RootTree.blendType = BlendTreeType.Direct;
             CurrentNum = 1;
             this.IsAbsolute = IsAbsolute;
+            if (DEBUGMODE)
+            {
+                Debug.LogWarning($@"BlendTreeBuilderはDebugモードで起動しています。このモードではProjectFolder(現在{ProjectFolder})へのファイル出力等が実行されます。配布時このモードはOFFになっているべきです。");
+            }
         }
         public int MaxNum()
         {
@@ -40,6 +45,10 @@ namespace com.github.pandrabox.unlimitedcolor.editor
             if (IsAbsolute)
             {
                 MAMergeBlendTree.PathMode = MergeAnimatorPathMode.Absolute;
+            }
+            if (DEBUGMODE)
+            {
+                AssetDatabase.CreateAsset(RootTree,$@"{DebugOutpFolder}UnlimitedColor.asset");
             }
         }
         public void setDirectBlendParameter(UnityEditor.Animations.BlendTree parentBlendTree, string parameterName, int setChildNum = -1)

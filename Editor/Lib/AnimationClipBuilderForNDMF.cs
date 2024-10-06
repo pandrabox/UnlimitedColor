@@ -3,6 +3,7 @@ using UnityEditor;
 using System;
 using System.IO;
 using System.Collections.Generic;
+using static com.github.pandrabox.unlimitedcolor.runtime.config;
 
 namespace com.github.pandrabox.unlimitedcolor.editor
 {
@@ -21,7 +22,7 @@ namespace com.github.pandrabox.unlimitedcolor.editor
     //A management class that creates, loads, and saves multiple animation Builders.
     public class AnimationClipsBuilder : AvatarBuilder
     {
-        Dictionary<string, AnimationClipBuilder> AnimationClips;
+        public Dictionary<string, AnimationClipBuilder> AnimationClips;
         public AnimationClipsBuilder(string ProjectFolder = "") : base(ProjectFolder)
         {
             AnimationClips=new Dictionary<string, AnimationClipBuilder>();
