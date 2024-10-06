@@ -53,6 +53,7 @@ namespace com.github.pandrabox.unlimitedcolor.editor
         public GameObject AvatarRoot;
         public List<string> ResolvedColorType;
         public ColorParam[] ColorParams;
+        private readonly string IcoFolder = "Packages/com.github.pandrabox.unlimitedcolor/Assets/Ico/";
         public ColorChangerMain(GameObject Target)
         {
             AvatarRoot = FindComponentFromParent<VRCAvatarDescriptor>(Target).gameObject;
@@ -83,7 +84,7 @@ namespace com.github.pandrabox.unlimitedcolor.editor
                 var CCRM = x.AddComponent<ModularAvatarMenuItem>();
                 CCRM.Control.name = "UnlimitedColor";
                 CCRM.Control.type = ControlType.SubMenu;
-                //CCRM.Control.icon = AssetDatabase.LoadAssetAtPath<Texture2D>($@"{ProjectFolder}/FlatsClothManager/ClothManager.png");
+                CCRM.Control.icon = AssetDatabase.LoadAssetAtPath<Texture2D>($@"{IcoFolder}Hue.png");
                 CCRM.MenuSource = SubmenuSource.Children;
             });
 
@@ -96,7 +97,7 @@ namespace com.github.pandrabox.unlimitedcolor.editor
                 var CurrentMAMI = CurrentObj.AddComponent<ModularAvatarMenuItem>();
                 CurrentMAMI.Control.name = TypeName;
                 CurrentMAMI.Control.type = ControlType.SubMenu;
-                //CurrentMAMI.Control.icon = AssetDatabase.LoadAssetAtPath<Texture2D>($@"{ProjectFolder}/Ico/Color1.png");
+                CurrentMAMI.Control.icon = AssetDatabase.LoadAssetAtPath<Texture2D>($@"{IcoFolder}Hue.png");
                 CurrentMAMI.MenuSource = SubmenuSource.Children;
                 UnitColorChangerObj = CurrentObj;
             }
@@ -109,7 +110,7 @@ namespace com.github.pandrabox.unlimitedcolor.editor
                 var obj = GetOrCreateObject(UnitColorChangerObj, colorParam.jp);
                 var menu = obj.AddComponent<ModularAvatarMenuItem>();
                 menu.Control.type = ControlType.RadialPuppet;
-                // HueGammaMenu.Control.icon = AssetDatabase.LoadAssetAtPath<Texture2D>($@"{ProjectFolder}/Ico/Color1.png");
+                menu.Control.icon = AssetDatabase.LoadAssetAtPath<Texture2D>($@"{IcoFolder}{colorParam.eng}.png");
                 var CurrentParameter = new Parameter[1];
                 CurrentParameter[0] = new Parameter() { name = $@"{suffix}/{colorParam.eng}" };
                 menu.Control.subParameters = CurrentParameter;
