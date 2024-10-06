@@ -28,8 +28,7 @@ namespace com.github.pandrabox.unlimitedcolor.editor
             var Target = GameObject.Find("ColorChanger");
             if (Target != null)
             {
-                new ColorChangerMain(Target).Run();
-                Debug.LogWarning("a!");
+                new ColorChangerMain(Target);
             }
         }
     }
@@ -45,11 +44,12 @@ namespace com.github.pandrabox.unlimitedcolor.editor
         public ColorChangerMain(GameObject Target)
         {
             AvatarRoot = FindComponentFromParent<VRCAvatarDescriptor>(Target).gameObject;
+            Run();
         }
         public void Run()
         {
             ResolvedColorType = new List<string>();
-            string[] Items = new string[] { "body", "hair", "hone" };
+            string[] Items = new string[] { "Body", "hair", "hone" };
             MakeUnitColorChanger($@"pandra/Color", "T", Items);
             //MakeUnitColorChanger("BodyColor", "Body", new string[] { "Body", "karada", "mohu" });
             //FCMCloth[] FCMCloths = AvatarRoot.GetComponentsInChildren<FCMCloth>(true);
