@@ -1,5 +1,8 @@
 Launch liltoon's color correction function from VRC's ExpressionMenu
 
+- Download
+    - [VPAI](https://api.anatawa12.com/create-vpai/?name=UnlimitedColor-installer.unitypackage&repo=https://pandrabox.github.io/vpm/index.json&package=com.github.pandrabox.UnlimitedColor&version=%3E=0.0.0)
+
 - これは何？
     - VRCのアバターに使用されているRendererのメインカラーVRC内で色変更できるようにします。Liltoonシェーダーを使っている場合に動作します
 
