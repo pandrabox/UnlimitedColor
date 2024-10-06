@@ -1,6 +1,6 @@
 {
   "name": "com.github.pandrabox.unlimitedcolor",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "displayName": "UnlimitedColor",
   "author": {
     "name": "pandra"
@@ -10,7 +10,6 @@
   "vpmDependencies": {
     "com.vrchat.avatars": ">=3.4.0",
     "nadena.dev.modular-avatar": ">=1.9.0",
-    "com.vrcfury.vrcfury" : ">=1.0.0",
     "jp.lilxyzw.liltoon" : ">=1.0.0"
   },
   "license": "MIT"
