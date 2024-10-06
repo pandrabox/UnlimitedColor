@@ -1,5 +1,7 @@
 Launch liltoon's color correction function from VRC's ExpressionMenu
 
+- これは何？
+    - VRCのアバターに使用されているRendererのメインカラーVRC内で色変更できるようにします。Liltoonシェーダーを使っている場合に動作します
 
 - 除外について
     - 本アセットはデフォルト全てのRendererの色を変更可能にしようとします。グループ1つ目、OutOfTargetに登録すると除外されます
