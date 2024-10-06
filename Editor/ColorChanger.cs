@@ -209,7 +209,7 @@ namespace com.github.pandrabox.unlimitedcolor.editor
             }
             foreach (var colorParam in ColorParams)
             {
-                MAP.parameters.Add(new ParameterConfig() { nameOrPrefix = $@"{suffix}/{colorParam.eng}", syncType = ParameterSyncType.Float, saved = true, localOnly = true, defaultValue = 0.5f });
+                MAP.parameters.Add(new ParameterConfig() { nameOrPrefix = $@"{suffix}/{colorParam.eng}", syncType = ParameterSyncType.Float, saved = true, localOnly = false, defaultValue = 0.5f });
             }
 
 
