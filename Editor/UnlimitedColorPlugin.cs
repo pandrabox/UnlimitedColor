@@ -12,8 +12,9 @@ namespace com.github.pandrabox.unlimitedcolor.editor
     {
         protected override void Configure()
         {
-            InPhase(BuildPhase.Resolving).BeforePlugin("nadena.dev.modular-avatar").Run("UnlimitedColor", ctx =>
+            InPhase(BuildPhase.Transforming).BeforePlugin("nadena.dev.modular-avatar").Run("UnlimitedColor", ctx =>
             {
+                //Debug.LogWarning("aaaa");
                 UnlimitedColor tgt = ctx.AvatarRootTransform.GetComponentInChildren<UnlimitedColor>(false);
                 if (tgt == null) return;
                 new ColorChangerMain(tgt);

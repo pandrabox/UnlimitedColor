@@ -242,7 +242,7 @@ namespace com.github.pandrabox.unlimitedcolor.editor
                     }
                 }
             }
-            var bb = new BlendTreeBuilderForNDMF(ProjectFolder, UnitColorChangerObj);
+            var bb = new BlendTreeBuilderForNDMF(ProjectFolder, ColorChangerRoot, false, AvatarRoot);
             bb.rootDBT(() =>
             {
                 foreach (var colorParam in ColorParams)

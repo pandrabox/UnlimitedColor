@@ -16,14 +16,17 @@ namespace com.github.pandrabox.unlimitedcolor.editor
         public string NextName;
         public bool IsAbsolute;
         public bool IsMMDSafe;
+        public GameObject RelativeRoot;
         /// <summary>
         /// BlendTreeを生成してMergeBlendTreeする。MBTなのでそのままでは使いにくい
         /// </summary>
         /// <param name="_ProjectFolder">作業ファイルの一時生成場所や各種命名に使われる基準パス</param>
-        /// <param name="AvatarRootObject">TargetObject変数に代入される。特に内部処理はない</param>
+        /// <param name="target">TargetObject変数に代入される。特に内部処理はない</param>
         /// <param name="IsAbsolute">基本ON。MergeBlendTreeのパス解決方法</param>
-        public BlendTreeBuilderForNDMF(string _ProjectFolder, GameObject AvatarRootObject, bool IsAbsolute=true) : base(_ProjectFolder, AvatarRootObject)
+        /// <param name="relativeRoot">IsAbsolute=falseのときのルート</param>
+        public BlendTreeBuilderForNDMF(string _ProjectFolder, GameObject target, bool IsAbsolute=true, GameObject relativeRoot = null) : base(_ProjectFolder, target)
         {
+            RelativeRoot=relativeRoot;
             BuildingTrees = new List<BlendTree>() { null, new BlendTree() };
             RootTree = BuildingTrees[1];
             RootTree.blendType = BlendTreeType.Direct;
@@ -45,6 +48,10 @@ namespace com.github.pandrabox.unlimitedcolor.editor
             if (IsAbsolute)
             {
                 MAMergeBlendTree.PathMode = MergeAnimatorPathMode.Absolute;
+            }
+            else
+            {
+                if(RelativeRoot != null) MAMergeBlendTree.RelativePathRoot.Set(RelativeRoot);
             }
             if (DEBUGMODE)
             {
