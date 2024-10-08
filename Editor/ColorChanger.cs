@@ -55,6 +55,7 @@ namespace com.github.pandrabox.unlimitedcolor.editor
         }
         public void Run()
         {
+            int n = 0;
             foreach(RendererGroup rGroup in Target.RendererGroups)
             {
                 //何等かのグループに属していたら個別からは削除
@@ -66,12 +67,18 @@ namespace com.github.pandrabox.unlimitedcolor.editor
                     }
                 }
                 if (rGroup.GroupName == "OutOfTarget") continue;
+                var safeName = SanitizeFileName(rGroup.GroupName);
+                if (safeName == null || safeName == "" || safeName == "Untitled")
+                {
+                    safeName = $@"Untitled{n:D3}";
+                }
                 if(DEBUGMODE)
                 {
-                    Debug.LogWarning(rGroup.GroupName);
+                    Debug.LogWarning(safeName);
                 }
                 //グループ定義したもののチェンジャー
-                MakeUnitColorChanger(rGroup.GroupName,"", RenderersToPaths(rGroup.Renderers));
+                MakeUnitColorChanger(safeName, "", RenderersToPaths(rGroup.Renderers));
+                n++;
             }
             if (!Target.Explicit)
             {
@@ -131,9 +138,9 @@ namespace com.github.pandrabox.unlimitedcolor.editor
             return string.IsNullOrEmpty(fileName) ? "Untitled" : fileName;
         }
 
-        public void MakeUnitColorChanger(string TypeName, string ColorType, string[] TargetObjNames)
+        public void MakeUnitColorChanger(string safeName, string ColorType, string[] TargetObjNames)
         {
-            var safeName = SanitizeFileName(TypeName);
+            safeName = SanitizeFileName(safeName);
             //ルートオブジェクトNDMFColorChangerの作成（ただの枠）
             var ColorChangerRoot = GetOrCreateObject(AvatarRoot, "NDMFColorChanger");
             //FlatsClothオブジェクトを直下に作成（後でマージするため着せ替えと同じ名称ツリーにする）
@@ -149,12 +156,12 @@ namespace com.github.pandrabox.unlimitedcolor.editor
 
             //実動作を仕舞う入れ物の作成（スラッシュ区切りで階層と名称を指定、後で中に「色合い(Hue,Gamma)」と「明るさ(Value,Saturation)」を入れる
             GameObject CurrentObj = null, UnitColorChangerObj = null;
-            var NameHierarchy = TypeName.Split('/');
+            var NameHierarchy = safeName.Split('/');
             for (var n = 0; n < NameHierarchy.Length; n++)
             {
                 CurrentObj = GetOrCreateObject(n == 0 ? DummyFCM : CurrentObj, NameHierarchy[n]);
                 var CurrentMAMI = CurrentObj.AddComponent<ModularAvatarMenuItem>();
-                CurrentMAMI.Control.name = TypeName;
+                CurrentMAMI.Control.name = safeName;
                 CurrentMAMI.Control.type = ControlType.SubMenu;
                 CurrentMAMI.Control.icon = AssetDatabase.LoadAssetAtPath<Texture2D>($@"{IcoFolder}Hue.png");
                 CurrentMAMI.MenuSource = SubmenuSource.Children;
