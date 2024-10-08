@@ -84,11 +84,11 @@ namespace com.github.pandrabox.unlimitedcolor.runtime
             //カスタムグループの描画
             if (prop_Explicit.boolValue)
             {
-                EditorGUILayout.HelpBox("色変更グループを作成し、Rendererを登録してください。グループ名は重複しないよう注意してください。", MessageType.Info);
+                EditorGUILayout.HelpBox("同時に色を変えたいグループを作り、Rendererを登録して下さい。名前は重複しないよう注意してください。", MessageType.Info);
             }
             else
             {
-                EditorGUILayout.HelpBox("色変更グループを作成し、Rendererを登録してください。グループ名・未登録オブジェクト名は重複しないよう注意してください。\nグループ化すると消費パラメータが軽減できます。", MessageType.Info);
+                EditorGUILayout.HelpBox("同時に色を変えたいグループを作り、Rendererを登録して下さい。名前は重複しないよう注意してください。\nグループ化すると消費パラメータが軽減できます。", MessageType.Info);
             }
 
             // Buttons for adding and removing RendererGroups
@@ -96,6 +96,14 @@ namespace com.github.pandrabox.unlimitedcolor.runtime
             if (GUILayout.Button("+"))
             {
                 rendererGroupsProperty.arraySize++;
+                SerializedProperty newGroup = rendererGroupsProperty.GetArrayElementAtIndex(rendererGroupsProperty.arraySize - 1);
+
+                // Initialize the GroupName and Renderers array in the new RendererGroup
+                SerializedProperty groupName = newGroup.FindPropertyRelative(nameof(RendererGroup.GroupName));
+                SerializedProperty renderers = newGroup.FindPropertyRelative(nameof(RendererGroup.Renderers));
+
+                groupName.stringValue = "";  // Set default group name
+                renderers.arraySize = 0;
             }
 
             if (GUILayout.Button("-"))
@@ -185,6 +193,8 @@ namespace com.github.pandrabox.unlimitedcolor.runtime
                 if (GUI.Button(button1, "+"))
                 {
                     Renderers.arraySize++; // Increase array size
+                    SerializedProperty newRenderer = Renderers.GetArrayElementAtIndex(Renderers.arraySize - 1);
+                    newRenderer.objectReferenceValue = null; // Reset to null or an initial value
                 }
                 if (GUI.Button(button2, "-"))
                 {
