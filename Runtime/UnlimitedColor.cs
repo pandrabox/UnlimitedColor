@@ -29,11 +29,27 @@ namespace com.github.pandrabox.unlimitedcolor.runtime
     public class UnlimitedColorEditor : Editor
     {
         private bool showExMenu = false;
+        private Texture2D _emotePrefabIcoAndLogo;
         public override void OnInspectorGUI()
         {
+            if (_emotePrefabIcoAndLogo == null) _emotePrefabIcoAndLogo = AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/com.github.pandrabox.unlimitedcolor/Assets/Ico/minilogo.png");
+            if (_emotePrefabIcoAndLogo != null)
+            {
+                float iconWidth = 186;
+                float iconHeight = 40;
+
+                GUILayout.BeginHorizontal();
+                GUILayout.FlexibleSpace();
+                //GUILayout.Label(_emotePrefabIcoAndLogo, GUILayout.Width(iconWidth), GUILayout.Height(iconHeight));
+                GUILayout.Label(_emotePrefabIcoAndLogo);
+                GUILayout.FlexibleSpace();
+                GUILayout.EndHorizontal();
+                GUILayout.Space(4);
+            }
+
             serializedObject.Update();
 
-
+            EditorGUILayout.LabelField("UnlimitedColorはliltoonを使ったRendererの色をVRC上で変更可能にするツールです。\n・liltoonでなくてもメニューは出ますが、変更できません\n・非常に多くのパラメータを使うため、多数の衣装等を使っているアバターではアップロードできないことがあります(このプレハブを消せば元に戻ります)。\n\n詳細な使い方・アップロードできないときの処置は同梱のHowToUseを御覧下さい。", EditorStyles.wordWrappedLabel);
 
             Title("色調最大値設定");
             EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(UnlimitedColor.SaturationMax)));
