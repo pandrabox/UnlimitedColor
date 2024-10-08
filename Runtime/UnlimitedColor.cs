@@ -10,13 +10,13 @@ namespace com.github.pandrabox.unlimitedcolor.runtime
     [AddComponentMenu("Pan/UnlimitedColor")]
     public class UnlimitedColor : MonoBehaviour, VRC.SDKBase.IEditorOnly
     {
-        public bool FixMAMBT;
+        public bool Explicit;
         public float SaturationMax, ValueMax, GammaMax;
 
         public RendererGroup[] RendererGroups;
         public UnlimitedColor()
         {
-            FixMAMBT = true;
+            Explicit = false;
             SaturationMax = 2;
             ValueMax = 2;
             GammaMax = 2;
@@ -34,19 +34,46 @@ namespace com.github.pandrabox.unlimitedcolor.runtime
             serializedObject.Update();
 
 
-            showExMenu = EditorGUILayout.Toggle("Show Advanced Menu", showExMenu);
-            if (showExMenu)
+
+            Title("色調最大値設定");
+            EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(UnlimitedColor.SaturationMax)));
+            EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(UnlimitedColor.ValueMax)));
+            EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(UnlimitedColor.GammaMax)));
+            EditorGUILayout.HelpBox("彩度(S)、明度(V)、ガンマ(G)の最大値は標準で2ですが、大きくすることで色幅を増やすことができます。ただしノイズが乗ることがあります。", MessageType.Info);
+
+
+
+
+
+            Title("初期値設定");
+
+            var rendererGroupsProperty = serializedObject.FindProperty(nameof(UnlimitedColor.RendererGroups));
+
+            var prop_Explicit = serializedObject.FindProperty(nameof(UnlimitedColor.Explicit));
+            EditorGUILayout.PropertyField(prop_Explicit);
+            if (prop_Explicit.boolValue)
             {
-                EditorGUILayout.PropertyField(serializedObject.FindProperty("FixMAMBT"));
-                EditorGUILayout.HelpBox("本アセットは内部的にModular Avatar Merge Blend Treeを使っています。これはFXの一番上にレイヤを作成するため、MMD等にずれが生じます。ここのチェックボックスをONすると、そのズレを抑制します。多くの場合ONでいいはずですが、既にMerge BlendTreeが最初であることを前提して作成しているアバターの場合異常動作の原因となりますので、チェックを外して下さい。", MessageType.Info);
-                EditorGUILayout.PropertyField(serializedObject.FindProperty("SaturationMax"));
-                EditorGUILayout.PropertyField(serializedObject.FindProperty("ValueMax"));
-                EditorGUILayout.PropertyField(serializedObject.FindProperty("GammaMax"));
-                EditorGUILayout.HelpBox("彩度(S)、明度(V)、ガンマ(G)はLiltoonのGUI上において最大値が2で制限されており、本アセットも基本はその値を上限にしています。システム上はそれより大きい値の設定も可能です。大きくしすぎるとノイズ増加や操作操作感悪化につながるため、変更には注意して下さい。", MessageType.Info);
+                EditorGUILayout.HelpBox("現在の設定では、色変更したいRendererをグループ定義する必要があります。\n定義していないものは、変更できません", MessageType.Info);
+            }
+            else
+            {
+                EditorGUILayout.HelpBox("すべてのRendererは色変更できます。不要なものは、OutOfTargetグループに登録して下さい\n※注意：現在、パラメータを多く使用する設定になっています（上のチェックで切り替え）", MessageType.Info);
+                SerializedProperty groupProperty = rendererGroupsProperty.GetArrayElementAtIndex(0);
+                EditorGUILayout.PropertyField(groupProperty, new GUIContent($"Group {1}"));
             }
 
 
-            var rendererGroupsProperty = serializedObject.FindProperty("RendererGroups");
+            Title("グルーピング");
+
+            //カスタムグループの描画
+            if (prop_Explicit.boolValue)
+            {
+                EditorGUILayout.HelpBox("色変更グループを作成し、Rendererを登録してください。グループ名は重複しないよう注意してください。", MessageType.Info);
+            }
+            else
+            {
+                EditorGUILayout.HelpBox("色変更グループを作成し、Rendererを登録してください。グループ名・未登録オブジェクト名は重複しないよう注意してください。\nグループ化すると消費パラメータが軽減できます。", MessageType.Info);
+            }
 
             // Buttons for adding and removing RendererGroups
             EditorGUILayout.BeginHorizontal();
@@ -69,19 +96,45 @@ namespace com.github.pandrabox.unlimitedcolor.runtime
             if (rendererGroupsProperty.arraySize > 0)
             {
                 var firstGroupProperty = rendererGroupsProperty.GetArrayElementAtIndex(0);
-                firstGroupProperty.FindPropertyRelative("GroupName").stringValue = "OutOfTarget";
+                firstGroupProperty.FindPropertyRelative(nameof(RendererGroup.GroupName)).stringValue = "OutOfTarget";
             }
 
             EditorGUILayout.EndHorizontal();
 
-            for (int i = 0; i < rendererGroupsProperty.arraySize; i++)
+
+
+            for (int i = 1; i < rendererGroupsProperty.arraySize; i++)
             {
                 SerializedProperty groupProperty = rendererGroupsProperty.GetArrayElementAtIndex(i);
                 EditorGUILayout.PropertyField(groupProperty, new GUIContent($"Group {i + 1}"));
-
             }
-            EditorGUILayout.HelpBox("デフォルトでは全てのRendererを独立して色変更できるようになり、非常に多くのパラメータを消費します。色変更が不要なものはOutOfTargetグループに登録して下さい。同時に色を変えたいものはグループを作成して登録して下さい。グループ名・オブジェクト名は重複しないよう注意して下さい。", MessageType.Info);
             serializedObject.ApplyModifiedProperties();
+        }
+        private static void Title(string t)
+        {
+            GUILayout.BeginHorizontal();
+
+            var lineRect = GUILayoutUtility.GetRect(0, EditorGUIUtility.singleLineHeight, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
+            int leftBorderSize = 5;
+            var leftRect = new Rect(lineRect.x, lineRect.y, leftBorderSize, lineRect.height);
+            var rightRect = new Rect(lineRect.x + leftBorderSize, lineRect.y, lineRect.width - leftBorderSize, lineRect.height);
+            Color leftColor = new Color32(0xF4, 0xAD, 0x39, 0xFF);
+            Color rightColor = new Color32(0x39, 0xA7, 0xF4, 0xFF);
+
+            EditorGUI.DrawRect(leftRect, leftColor);
+            EditorGUI.DrawRect(rightRect, rightColor);
+
+            var textStyle = new GUIStyle(EditorStyles.label)
+            {
+                alignment = TextAnchor.MiddleLeft,
+                padding = new RectOffset(5, 0, 0, 0),
+                fontStyle = FontStyle.Bold,
+                normal = { textColor = Color.black },
+            };
+
+            GUI.Label(rightRect, t, textStyle);
+
+            GUILayout.EndHorizontal();
         }
     }
 
@@ -102,8 +155,8 @@ namespace com.github.pandrabox.unlimitedcolor.runtime
             EditorGUI.BeginProperty(position, label, property);
 
             // Get properties
-            SerializedProperty GroupName = property.FindPropertyRelative("GroupName");
-            SerializedProperty Renderers = property.FindPropertyRelative("Renderers");
+            SerializedProperty GroupName = property.FindPropertyRelative(nameof(RendererGroup.GroupName));
+            SerializedProperty Renderers = property.FindPropertyRelative(nameof(RendererGroup.Renderers));
 
             // Calculate widths
             float buttonWidth = 30;
@@ -140,7 +193,7 @@ namespace com.github.pandrabox.unlimitedcolor.runtime
         // Adjust height dynamically based on the number of elements
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
-            SerializedProperty Renderers = property.FindPropertyRelative("Renderers");
+            SerializedProperty Renderers = property.FindPropertyRelative(nameof(RendererGroup.Renderers));
             float lineHeight = EditorGUIUtility.singleLineHeight;
             return lineHeight * (Renderers.arraySize + 1) +.1f;
         }

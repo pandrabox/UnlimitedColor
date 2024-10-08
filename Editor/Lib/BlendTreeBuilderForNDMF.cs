@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using nadena.dev.modular_avatar.core;
 using static com.github.pandrabox.unlimitedcolor.runtime.config;
+using com.github.pandrabox.unlimitedcolor.runtime;
 
 namespace com.github.pandrabox.unlimitedcolor.editor
 {
@@ -17,6 +18,7 @@ namespace com.github.pandrabox.unlimitedcolor.editor
         public bool IsAbsolute;
         public bool IsMMDSafe;
         public GameObject RelativeRoot;
+        public string BlendTreeName;
         /// <summary>
         /// BlendTreeを生成してMergeBlendTreeする。MBTなのでそのままでは使いにくい
         /// </summary>
@@ -24,8 +26,9 @@ namespace com.github.pandrabox.unlimitedcolor.editor
         /// <param name="target">TargetObject変数に代入される。特に内部処理はない</param>
         /// <param name="IsAbsolute">基本ON。MergeBlendTreeのパス解決方法</param>
         /// <param name="relativeRoot">IsAbsolute=falseのときのルート</param>
-        public BlendTreeBuilderForNDMF(string _ProjectFolder, GameObject target, bool IsAbsolute=true, GameObject relativeRoot = null) : base(_ProjectFolder, target)
+        public BlendTreeBuilderForNDMF(string _ProjectFolder, GameObject target, bool IsAbsolute=true, GameObject relativeRoot = null, string blendTreeName="") : base(_ProjectFolder, target)
         {
+            BlendTreeName = blendTreeName;
             RelativeRoot=relativeRoot;
             BuildingTrees = new List<BlendTree>() { null, new BlendTree() };
             RootTree = BuildingTrees[1];
@@ -43,19 +46,21 @@ namespace com.github.pandrabox.unlimitedcolor.editor
         }
         public virtual void Apply()
         {
-            ModularAvatarMergeBlendTree MAMergeBlendTree = TargetObject.AddComponent<ModularAvatarMergeBlendTree>();
-            MAMergeBlendTree.BlendTree = RootTree;
+            if (DEBUGMODE)
+            {
+                AssetDatabase.CreateAsset(RootTree, $@"{DebugOutpFolder}{BlendTreeName}.asset");
+            }
+
+            PanMergeBlendTree PanMBT = TargetObject.AddComponent<PanMergeBlendTree>();
+            PanMBT.BlendTree = RootTree;
+            
             if (IsAbsolute)
             {
-                MAMergeBlendTree.PathMode = MergeAnimatorPathMode.Absolute;
+                PanMBT.PathMode = MergeAnimatorPathMode.Absolute;
             }
             else
             {
-                if(RelativeRoot != null) MAMergeBlendTree.RelativePathRoot.Set(RelativeRoot);
-            }
-            if (DEBUGMODE)
-            {
-                AssetDatabase.CreateAsset(RootTree,$@"{DebugOutpFolder}UnlimitedColor.asset");
+                if(RelativeRoot != null) PanMBT.RelativePathRoot.Set(RelativeRoot);
             }
         }
         public void setDirectBlendParameter(UnityEditor.Animations.BlendTree parentBlendTree, string parameterName, int setChildNum = -1)

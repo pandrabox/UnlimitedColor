@@ -6,33 +6,16 @@ using System.Linq;
 using UnityEditor;
 using nadena.dev.modular_avatar.core;
 using static VRC.SDK3.Avatars.ScriptableObjects.VRCExpressionsMenu.Control;
-using static VRC.SDKBase.Networking;
 using static com.github.pandrabox.unlimitedcolor.runtime.Generic;
 using static com.github.pandrabox.unlimitedcolor.runtime.Generic_Dev;
 using VRC.SDK3.Avatars.Components;
 using static com.github.pandrabox.unlimitedcolor.runtime.config;
 using System.IO;
 using com.github.pandrabox.unlimitedcolor.runtime;
-
-//[assembly: ExportsPlugin(typeof(ColorChangerPass))]
+using com.github.pandrabox.unlimitedcolor.editor;
 
 namespace com.github.pandrabox.unlimitedcolor.editor
 {
-    /// <summary>
-    /// To call from Unity menu
-    /// </summary>
-    //public class GenColorChangerClass : MonoBehaviour
-    //{
-    //    [MenuItem("PBTB/Gen_ColorChanger")]
-    //    static void GenColorChanger()
-    //    {
-    //        var Target = GameObject.Find("ColorChanger");
-    //        if (Target != null)
-    //        {
-    //            new ColorChangerMain(Target);
-    //        }
-    //    }
-    //}
 
     public class ColorParam
     {
@@ -45,9 +28,7 @@ namespace com.github.pandrabox.unlimitedcolor.editor
             this.jp = jp;
         }
     }
-    /// <summary>
-    /// Actual operation
-    /// </summary>
+
     public class ColorChangerMain
     {
         public string ProjectFolder = "Assets/Pan/ClothManager/ColorChanger";
@@ -69,10 +50,8 @@ namespace com.github.pandrabox.unlimitedcolor.editor
                 new ColorParam("Gamma", "ガンマ")
             };
             Run();
-            if (Target.FixMAMBT)
-            {
-                GenMAMBTFixPrefab();
-            }
+
+            new PanMergeBlendTreePass().run(AvatarRoot);
         }
         public void Run()
         {
@@ -94,20 +73,16 @@ namespace com.github.pandrabox.unlimitedcolor.editor
                 //グループ定義したもののチェンジャー
                 MakeUnitColorChanger(rGroup.GroupName,"", RenderersToPaths(rGroup.Renderers));
             }
-            foreach(Renderer renderer in SoloRenderers)
+            if (!Target.Explicit)
             {
-                //未定義の個別チェンジャー
-                MakeUnitColorChanger(renderer.name, "", RenderersToPaths(new Renderer[1] { renderer }));
+                foreach (Renderer renderer in SoloRenderers)
+                {
+                    //未定義の個別チェンジャー
+                    MakeUnitColorChanger(renderer.name, "", RenderersToPaths(new Renderer[1] { renderer }));
+                }
             }
         }
 
-
-        private void GenMAMBTFixPrefab()
-        {
-            var obj = new GameObject("FixMAMBT");
-            obj.transform.SetParent(Target.transform);
-            obj.AddComponent<MAMBTFix>();
-        }
 
         public string[] RenderersToPaths(Renderer[] renderers)
         {
@@ -242,7 +217,7 @@ namespace com.github.pandrabox.unlimitedcolor.editor
                     }
                 }
             }
-            var bb = new BlendTreeBuilderForNDMF(ProjectFolder, ColorChangerRoot, false, AvatarRoot);
+            var bb = new BlendTreeBuilderForNDMF(ProjectFolder, ColorChangerRoot, false, AvatarRoot, safeName);
             bb.rootDBT(() =>
             {
                 foreach (var colorParam in ColorParams)

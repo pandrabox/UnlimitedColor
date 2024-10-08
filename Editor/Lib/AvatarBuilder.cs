@@ -138,7 +138,7 @@ namespace com.github.pandrabox.unlimitedcolor.editor
             }
             return clip;
         }
-        private void createFolder(string path)
+        public void createFolder(string path)
         {
             if (!Directory.Exists(path))
             {

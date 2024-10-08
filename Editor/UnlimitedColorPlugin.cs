@@ -18,6 +18,7 @@ namespace com.github.pandrabox.unlimitedcolor.editor
                 UnlimitedColor tgt = ctx.AvatarRootTransform.GetComponentInChildren<UnlimitedColor>(false);
                 if (tgt == null) return;
                 new ColorChangerMain(tgt);
+
             });
         }
     }
