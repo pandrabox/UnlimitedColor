@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using static com.github.pandrabox.unlimitedcolor.runtime.Generic;
 
 namespace com.github.pandrabox.unlimitedcolor.runtime
 {
@@ -36,12 +37,8 @@ namespace com.github.pandrabox.unlimitedcolor.runtime
             if (_emotePrefabIcoAndLogo == null) _emotePrefabIcoAndLogo = AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/com.github.pandrabox.unlimitedcolor/Assets/Ico/minilogo.png");
             if (_emotePrefabIcoAndLogo != null)
             {
-                float iconWidth = 186;
-                float iconHeight = 40;
-
                 GUILayout.BeginHorizontal();
                 GUILayout.FlexibleSpace();
-                //GUILayout.Label(_emotePrefabIcoAndLogo, GUILayout.Width(iconWidth), GUILayout.Height(iconHeight));
                 GUILayout.Label(_emotePrefabIcoAndLogo);
                 GUILayout.FlexibleSpace();
                 GUILayout.EndHorizontal();
@@ -133,8 +130,50 @@ namespace com.github.pandrabox.unlimitedcolor.runtime
                 SerializedProperty groupProperty = rendererGroupsProperty.GetArrayElementAtIndex(i);
                 EditorGUILayout.PropertyField(groupProperty, new GUIContent($"Group {i + 1}"));
             }
+
+
+            Title("未定義のlilToon Renderer");
+            if (prop_Explicit.boolValue)
+            {
+                EditorGUILayout.HelpBox("次のRendererは未定義です。Explicit=ONのため、色変更できません", MessageType.Info);
+            }
+            else
+            {
+                EditorGUILayout.HelpBox("次のRendererは未定義です。Explicit=OFFのため、個別色変更可能です", MessageType.Info);
+            }
+            var undefinedRenderers = UndefinedRenderers((UnlimitedColor)target);
+
+            EditorGUI.indentLevel++;
+            foreach(var ur in undefinedRenderers)
+            {
+                EditorGUILayout.ObjectField(ur, typeof(Renderer), allowSceneObjects: true);
+            }
+            EditorGUI.indentLevel--;
+
+
             serializedObject.ApplyModifiedProperties();
         }
+        private Renderer[] UndefinedRenderers(UnlimitedColor ConfigComponent)
+        {
+            // avatarRoot を取得
+            Transform avatarRoot = GetAvatarRootTransform(ConfigComponent.transform);
+            // avatarRoot 以下全ての Renderer を取得
+            List<Renderer> allRenderers = new List<Renderer>(avatarRoot.GetComponentsInChildren<Renderer>());
+            // すべての Renderer に対して isLil を実行し、false の場合はリストから除外
+            allRenderers.RemoveAll(renderer => !isLil(renderer));
+            // 定義されている RendererGroups から、既に登録されている Renderer を allRenderers から除外
+            RendererGroup[] definedRendererGroups = ConfigComponent.RendererGroups;
+            foreach (var rendererGroup in definedRendererGroups)
+            {
+                foreach (Renderer renderer in rendererGroup.Renderers)
+                {
+                    allRenderers.Remove(renderer);
+                }
+            }
+            // 残った Renderer を配列に変換して返す
+            return allRenderers.ToArray();
+        }
+
         private static void Title(string t)
         {
             GUILayout.BeginHorizontal();
