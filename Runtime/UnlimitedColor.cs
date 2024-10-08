@@ -22,6 +22,7 @@ namespace com.github.pandrabox.unlimitedcolor.runtime
             GammaMax = 2;
             RendererGroups = new RendererGroup[1];
         }
+
     }
 
 

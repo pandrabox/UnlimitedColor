@@ -200,5 +200,23 @@ namespace com.github.pandrabox.unlimitedcolor.runtime
             pathSegments.Reverse();
             return String.Join("/", pathSegments);
         }
+
+
+
+
+        //RendererにlilToonが使われているかどうか判定
+        public static bool isLil(Renderer renderer)
+        {
+            if (renderer == null || renderer.sharedMaterials == null) return false;
+            for (int j = 0; j < renderer.sharedMaterials.Length; j++)
+            {
+                var material = renderer.sharedMaterials[j];
+                if (material != null && material.shader != null && material.shader.name.Contains("lilToon"))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
     }
 }

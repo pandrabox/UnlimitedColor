@@ -102,21 +102,6 @@ namespace com.github.pandrabox.unlimitedcolor.editor
             }
         }
 
-        //RendererにlilToonが使われているかどうか判定
-        private bool isLil(Renderer renderer)
-        {
-            if (renderer == null || renderer.sharedMaterials == null) return false;
-            for (int j = 0; j < renderer.sharedMaterials.Length; j++)
-            {
-                var material = renderer.sharedMaterials[j];
-                if (material != null && material.shader != null && material.shader.name.Contains("lilToon"))
-                {
-                    return true;
-                }
-            }
-            return false;
-        }
-
         public string[] RenderersToPaths(Renderer[] renderers)
         {
             List<string> pathsList = new List<string>();
