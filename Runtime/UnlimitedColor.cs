@@ -49,7 +49,7 @@ namespace com.github.pandrabox.unlimitedcolor.runtime
 
             serializedObject.Update();
 
-            EditorGUILayout.LabelField("UnlimitedColorはliltoonを使ったRendererの色をVRC上で変更可能にするツールです。\n・liltoonでなくてもメニューは出ますが、変更できません\n・非常に多くのパラメータを使うため、多数の衣装等を使っているアバターではアップロードできないことがあります(このプレハブを消せば元に戻ります)。\n\n詳細な使い方・アップロードできないときの処置は同梱のHowToUseを御覧下さい。", EditorStyles.wordWrappedLabel);
+            EditorGUILayout.LabelField("UnlimitedColorはlilToonを使ったRendererの色をVRC上で変更可能にするツールです。\n・非常に多くのパラメータを使うため、多数の衣装等を使っているアバターではアップロードできないことがあります(このプレハブを消せば元に戻ります)。\n\n詳細な使い方・アップロードできないときの処置は同梱のHowToUseを御覧下さい。", EditorStyles.wordWrappedLabel);
 
             Title("色調最大値設定");
             EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(UnlimitedColor.SaturationMax)));

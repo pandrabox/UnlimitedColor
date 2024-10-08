@@ -66,7 +66,9 @@ namespace com.github.pandrabox.unlimitedcolor.editor
                         SoloRenderers.Remove(renderer);
                     }
                 }
+                //除外グループなら処理を終了
                 if (rGroup.GroupName == "OutOfTarget") continue;
+                //安全なグループ名の算出
                 var safeName = SanitizeFileName(rGroup.GroupName);
                 if (safeName == null || safeName == "" || safeName == "Untitled")
                 {
@@ -76,6 +78,15 @@ namespace com.github.pandrabox.unlimitedcolor.editor
                 {
                     Debug.LogWarning(safeName);
                 }
+                // シェーダーチェック
+                for (int i = 0; i < rGroup.Renderers.Length; i++)
+                {
+                    if (!isLil(rGroup.Renderers[i]))
+                    {
+                        rGroup.Renderers[i] = null;
+                    }
+                }
+
                 //グループ定義したもののチェンジャー
                 MakeUnitColorChanger(safeName, "", RenderersToPaths(rGroup.Renderers));
                 n++;
@@ -85,11 +96,26 @@ namespace com.github.pandrabox.unlimitedcolor.editor
                 foreach (Renderer renderer in SoloRenderers)
                 {
                     //未定義の個別チェンジャー
+                    if (!isLil(renderer)) continue;
                     MakeUnitColorChanger(renderer.name, "", RenderersToPaths(new Renderer[1] { renderer }));
                 }
             }
         }
 
+        //RendererにlilToonが使われているかどうか判定
+        private bool isLil(Renderer renderer)
+        {
+            if (renderer == null || renderer.sharedMaterials == null) return false;
+            for (int j = 0; j < renderer.sharedMaterials.Length; j++)
+            {
+                var material = renderer.sharedMaterials[j];
+                if (material != null && material.shader != null && material.shader.name.Contains("lilToon"))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
 
         public string[] RenderersToPaths(Renderer[] renderers)
         {
@@ -105,7 +131,7 @@ namespace com.github.pandrabox.unlimitedcolor.editor
                     }
                 }
             }
-            return pathsList.ToArray();
+            return pathsList.Count == 0 ? null : pathsList.ToArray();
         }
 
         public string RendererToPath(Renderer tgt)
@@ -140,6 +166,8 @@ namespace com.github.pandrabox.unlimitedcolor.editor
 
         public void MakeUnitColorChanger(string safeName, string ColorType, string[] TargetObjNames)
         {
+            // 対象が空の場合（空グループ,lilToonでないものだけ）は何もしない
+            if (TargetObjNames == null) return;
             safeName = SanitizeFileName(safeName);
             //ルートオブジェクトNDMFColorChangerの作成（ただの枠）
             var ColorChangerRoot = GetOrCreateObject(AvatarRoot, "NDMFColorChanger");
