@@ -1,4 +1,4 @@
-﻿{
+{
     "name": "com.github.pandrabox.unlimitedcolor.editor",
     "references": [
         "nadena.dev.modular-avatar.core",
@@ -8,7 +8,9 @@
         "nadena.dev.ndmf",
         "nadena.dev.ndmf.vrchat",
         "VRC.SDK3A.Editor",
-        "com.github.pandrabox.unlimitedcolor.runtime"
+        "com.github.pandrabox.unlimitedcolor.runtime",
+        "com.github.pandrabox.pandravase.editor",
+        "com.github.pandrabox.pandravase.runtime"
     ],
     "includePlatforms": [
         "Editor"

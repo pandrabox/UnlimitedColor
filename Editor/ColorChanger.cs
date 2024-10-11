@@ -6,13 +6,13 @@ using System.Linq;
 using UnityEditor;
 using nadena.dev.modular_avatar.core;
 using static VRC.SDK3.Avatars.ScriptableObjects.VRCExpressionsMenu.Control;
-using static com.github.pandrabox.unlimitedcolor.runtime.Generic;
-using static com.github.pandrabox.unlimitedcolor.runtime.Generic_Dev;
 using VRC.SDK3.Avatars.Components;
-using static com.github.pandrabox.unlimitedcolor.runtime.config;
 using System.IO;
 using com.github.pandrabox.unlimitedcolor.runtime;
 using com.github.pandrabox.unlimitedcolor.editor;
+using com.github.pandrabox.pandravase.editor;
+using com.github.pandrabox.pandravase.runtime;
+using static com.github.pandrabox.pandravase.runtime.Util;
 
 namespace com.github.pandrabox.unlimitedcolor.editor
 {
@@ -31,17 +31,15 @@ namespace com.github.pandrabox.unlimitedcolor.editor
 
     public class ColorChangerMain
     {
-        public string ProjectFolder = "Assets/Pan/ClothManager/ColorChanger";
-        public GameObject AvatarRoot;
         public ColorParam[] ColorParams;
         public UnlimitedColor Target;
         public List<Renderer> SoloRenderers;
-        private readonly string IcoFolder = "Packages/com.github.pandrabox.unlimitedcolor/Assets/Ico/";
+        public PandraProject Prj;
         public ColorChangerMain(UnlimitedColor tgt)
         {
+            Prj = new PandraProject(tgt.gameObject, "UnlimitedColor", ProjectTypes.VPM);
             Target = tgt;
-            AvatarRoot = FindComponentFromParent<VRCAvatarDescriptor>(Target.transform).gameObject;
-            SoloRenderers = new List<Renderer>(AvatarRoot.GetComponentsInChildren<Renderer>(true));
+            SoloRenderers = new List<Renderer>(Prj.RootTransform.GetComponentsInChildren<Renderer>(true));
             ColorParams = new ColorParam[]
             {
                 new ColorParam("Hue", "色相"),
@@ -51,7 +49,7 @@ namespace com.github.pandrabox.unlimitedcolor.editor
             };
             Run();
 
-            new PanMergeBlendTreePass().run(AvatarRoot);
+            new PanMergeBlendTreePlugin(Prj.RootObject);
         }
         public void Run()
         {
@@ -74,21 +72,17 @@ namespace com.github.pandrabox.unlimitedcolor.editor
                 {
                     safeName = $@"Untitled{n:D3}";
                 }
-                if(DEBUGMODE)
-                {
-                    Debug.LogWarning(safeName);
-                }
                 // シェーダーチェック
                 for (int i = 0; i < rGroup.Renderers.Length; i++)
                 {
-                    if (!isLil(rGroup.Renderers[i]))
+                    if (!IsLil(rGroup.Renderers[i]))
                     {
                         rGroup.Renderers[i] = null;
                     }
                 }
 
                 //グループ定義したもののチェンジャー
-                MakeUnitColorChanger(safeName, "", RenderersToPaths(rGroup.Renderers));
+                CreateUnitColorChanger(safeName, RenderersToPaths(rGroup.Renderers));
                 n++;
             }
             if (!Target.Explicit)
@@ -96,12 +90,17 @@ namespace com.github.pandrabox.unlimitedcolor.editor
                 foreach (Renderer renderer in SoloRenderers)
                 {
                     //未定義の個別チェンジャー
-                    if (!isLil(renderer)) continue;
-                    MakeUnitColorChanger(renderer.name, "", RenderersToPaths(new Renderer[1] { renderer }));
+                    if (!IsLil(renderer)) continue;
+                    CreateUnitColorChanger(renderer.name, RenderersToPaths(new Renderer[1] { renderer }));
                 }
             }
         }
 
+        /// <summary>
+        /// Rendererの配列からRelativePathの配列を得る
+        /// </summary>
+        /// <param name="renderers"></param>
+        /// <returns></returns>
         public string[] RenderersToPaths(Renderer[] renderers)
         {
             List<string> pathsList = new List<string>();
@@ -109,7 +108,7 @@ namespace com.github.pandrabox.unlimitedcolor.editor
             {
                 if (renderer != null)
                 {
-                    string path = RendererToPath(renderer);
+                    string path = GetRelativePath(Prj.RootTransform, renderer.transform);
                     if (!string.IsNullOrEmpty(path))
                     {
                         pathsList.Add(path);
@@ -117,11 +116,6 @@ namespace com.github.pandrabox.unlimitedcolor.editor
                 }
             }
             return pathsList.Count == 0 ? null : pathsList.ToArray();
-        }
-
-        public string RendererToPath(Renderer tgt)
-        {
-            return FindPathRecursive(AvatarRoot.transform, tgt.transform);
         }
 
         /// <summary>
@@ -149,104 +143,81 @@ namespace com.github.pandrabox.unlimitedcolor.editor
             return string.IsNullOrEmpty(fileName) ? "Untitled" : fileName;
         }
 
-        public void MakeUnitColorChanger(string safeName, string ColorType, string[] TargetObjNames)
+        public void CreateUnitColorChanger(string safeName, string[] targetObjNames)
         {
             // 対象が空の場合（空グループ,lilToonでないものだけ）は何もしない
-            if (TargetObjNames == null) return;
-            safeName = SanitizeFileName(safeName);
-            //ルートオブジェクトNDMFColorChangerの作成（ただの枠）
-            var ColorChangerRoot = GetOrCreateObject(AvatarRoot, "NDMFColorChanger");
-            //FlatsClothオブジェクトを直下に作成（後でマージするため着せ替えと同じ名称ツリーにする）
-            var DummyFCM = GetOrCreateObject(ColorChangerRoot, "UnlimitedColor", (GameObject x) =>
+            if (targetObjNames == null) return;
+
+            // メニューのルート定義または取得
+            var menuRoot = Prj.GetOrCreateComponentObject<ModularAvatarMenuItem>("RootMenu",(x) =>
             {
-                x.AddComponent<ModularAvatarMenuInstaller>();
-                var CCRM = x.AddComponent<ModularAvatarMenuItem>();
-                CCRM.Control.name = "UnlimitedColor";
-                CCRM.Control.type = ControlType.SubMenu;
-                CCRM.Control.icon = AssetDatabase.LoadAssetAtPath<Texture2D>($@"{IcoFolder}Hue.png");
-                CCRM.MenuSource = SubmenuSource.Children;
+                x.gameObject.AddComponent<ModularAvatarMenuInstaller>();
+                x.Control.name= "UnlimitedColor";
+                x.Control.type= ControlType.SubMenu;
+                x.Control.icon = AssetDatabase.LoadAssetAtPath<Texture2D>($@"{Prj.ImgFolder}Hue.png");
+                x.MenuSource = SubmenuSource.Children;
             });
-
-            //実動作を仕舞う入れ物の作成（スラッシュ区切りで階層と名称を指定、後で中に「色合い(Hue,Gamma)」と「明るさ(Value,Saturation)」を入れる
-            GameObject CurrentObj = null, UnitColorChangerObj = null;
-            var NameHierarchy = safeName.Split('/');
-            for (var n = 0; n < NameHierarchy.Length; n++)
+            // 対象1つ分のサブメニュー作成
+            safeName = SanitizeStr(safeName);
+            var colorMenu = ReCreateComponentObject<ModularAvatarMenuItem>(menuRoot.transform, safeName, (x)=>
             {
-                CurrentObj = GetOrCreateObject(n == 0 ? DummyFCM : CurrentObj, NameHierarchy[n]);
-                var CurrentMAMI = CurrentObj.AddComponent<ModularAvatarMenuItem>();
-                CurrentMAMI.Control.name = safeName;
-                CurrentMAMI.Control.type = ControlType.SubMenu;
-                CurrentMAMI.Control.icon = AssetDatabase.LoadAssetAtPath<Texture2D>($@"{IcoFolder}Hue.png");
-                CurrentMAMI.MenuSource = SubmenuSource.Children;
-                UnitColorChangerObj = CurrentObj;
-            }
-
-
-            //実動作を呼ぶスイッチ1
-            var suffix = $@"Pan/UnlimitedColor/{safeName}";
+                x.Control.name = safeName;
+                x.Control.type = ControlType.SubMenu;
+                x.Control.icon = AssetDatabase.LoadAssetAtPath<Texture2D>($@"{Prj.ImgFolder}Hue.png");
+                x.MenuSource = SubmenuSource.Children;
+            });
+            // それぞれの色調整メニュー作成
             foreach(var colorParam in ColorParams)
             {
-                var obj = GetOrCreateObject(UnitColorChangerObj, colorParam.jp);
-                var menu = obj.AddComponent<ModularAvatarMenuItem>();
-                menu.Control.type = ControlType.RadialPuppet;
-                menu.Control.icon = AssetDatabase.LoadAssetAtPath<Texture2D>($@"{IcoFolder}{colorParam.eng}.png");
-                var CurrentParameter = new Parameter[1];
-                CurrentParameter[0] = new Parameter() { name = $@"{suffix}/{colorParam.eng}" };
-                menu.Control.subParameters = CurrentParameter;
+                var ColorPuppet = CreateComponentObject<ModularAvatarMenuItem>(colorMenu.transform, colorParam.jp, (x) =>
+                {
+                    x.Control.name = colorParam.jp;
+                    x.Control.type = ControlType.RadialPuppet;
+                    x.Control.icon = AssetDatabase.LoadAssetAtPath<Texture2D>($@"{Prj.ImgFolder}{colorParam.eng}.png");
+                    x.Control.subParameters = new[] { new Parameter { name = Prj.GetParameterName($@"{safeName}/{colorParam.eng}") } };
+                });
             }
 
             //MAパラメータの定義
-            ModularAvatarParameters MAP = UnitColorChangerObj.GetComponent<ModularAvatarParameters>();
-            if (MAP == null)
+            var MAP = Prj.GetOrCreateComponentObject<ModularAvatarParameters>("Parameter", (x) =>
             {
-                MAP = UnitColorChangerObj.AddComponent<ModularAvatarParameters>();
-                MAP.parameters = new List<ParameterConfig>();
-            }
+                x.parameters = new List<ParameterConfig>();
+            });
             foreach (var colorParam in ColorParams)
             {
-                MAP.parameters.Add(new ParameterConfig() { nameOrPrefix = $@"{suffix}/{colorParam.eng}", syncType = ParameterSyncType.Float, saved = true, localOnly = false, defaultValue = 0.5f });
+                MAP.parameters.Add(new ParameterConfig { nameOrPrefix = Prj.GetParameterName($@"{safeName}/{colorParam.eng}"), syncType = ParameterSyncType.Float, saved = true, localOnly = false, defaultValue = 0.5f });
             }
 
-
-
-            //アニメとDBTの定義
-            var ac = new AnimationClipsBuilder(ProjectFolder);
-            foreach (var obj in TargetObjNames)
+            //アニメの定義
+            var ac = new AnimationClipsBuilder(Prj);
+            foreach (var obj in targetObjNames)
             {
-                ac.Name($@"{safeName}Hue-1").Curve(obj, typeof(Renderer), "material._MainTexHSVG.x").Keys(0, -.5f);
-                ac.Name($@"{safeName}Hue0").Curve(obj, typeof(Renderer), "material._MainTexHSVG.x").Keys(0, 0);
-                ac.Name($@"{safeName}Hue1").Curve(obj, typeof(Renderer), "material._MainTexHSVG.x").Keys(0, .5f);
-                ac.Name($@"{safeName}Saturation-1").Curve(obj, typeof(Renderer), "material._MainTexHSVG.y").Keys(0, 0);
-                ac.Name($@"{safeName}Saturation0").Curve(obj, typeof(Renderer), "material._MainTexHSVG.y").Keys(0, 1);
-                ac.Name($@"{safeName}Saturation1").Curve(obj, typeof(Renderer), "material._MainTexHSVG.y").Keys(0, Target.SaturationMax);
-                ac.Name($@"{safeName}Value-1").Curve(obj, typeof(Renderer), "material._MainTexHSVG.z").Keys(0, 0);
-                ac.Name($@"{safeName}Value0").Curve(obj, typeof(Renderer), "material._MainTexHSVG.z").Keys(0, 1);
-                ac.Name($@"{safeName}Value1").Curve(obj, typeof(Renderer), "material._MainTexHSVG.z").Keys(0, Target.ValueMax);
-                ac.Name($@"{safeName}Gamma-1").Curve(obj, typeof(Renderer), "material._MainTexHSVG.w").Keys(0, 0.01f);
-                ac.Name($@"{safeName}Gamma0").Curve(obj, typeof(Renderer), "material._MainTexHSVG.w").Keys(0, 1);
-                ac.Name($@"{safeName}Gamma1").Curve(obj, typeof(Renderer), "material._MainTexHSVG.w").Keys(0, Target.GammaMax);
+                ac.Clip($@"{safeName}Hue-1").Bind(obj, typeof(Renderer), "material._MainTexHSVG.x").Const2F(-.5f);
+                ac.Clip($@"{safeName}Hue0").Bind(obj, typeof(Renderer), "material._MainTexHSVG.x").Const2F(0);
+                ac.Clip($@"{safeName}Hue1").Bind(obj, typeof(Renderer), "material._MainTexHSVG.x").Const2F(.5f);
+                ac.Clip($@"{safeName}Saturation-1").Bind(obj, typeof(Renderer), "material._MainTexHSVG.y").Const2F(0);
+                ac.Clip($@"{safeName}Saturation0").Bind(obj, typeof(Renderer), "material._MainTexHSVG.y").Const2F(1);
+                ac.Clip($@"{safeName}Saturation1").Bind(obj, typeof(Renderer), "material._MainTexHSVG.y").Const2F(Target.SaturationMax);
+                ac.Clip($@"{safeName}Value-1").Bind(obj, typeof(Renderer), "material._MainTexHSVG.z").Const2F(0);
+                ac.Clip($@"{safeName}Value0").Bind(obj, typeof(Renderer), "material._MainTexHSVG.z").Const2F(1);
+                ac.Clip($@"{safeName}Value1").Bind(obj, typeof(Renderer), "material._MainTexHSVG.z").Const2F(Target.ValueMax);
+                ac.Clip($@"{safeName}Gamma-1").Bind(obj, typeof(Renderer), "material._MainTexHSVG.w").Const2F(0.01f);
+                ac.Clip($@"{safeName}Gamma0").Bind(obj, typeof(Renderer), "material._MainTexHSVG.w").Const2F(1);
+                ac.Clip($@"{safeName}Gamma1").Bind(obj, typeof(Renderer), "material._MainTexHSVG.w").Const2F(Target.GammaMax);
             }
-            if (DEBUGMODE)
-            {
-                foreach (var unitClip in ac.AnimationClips)
-                {
-                    string ClipPath = Path.Combine(DebugOutpFolder, $"{unitClip.Key}.anim");
-                    if (!File.Exists(ClipPath))
-                    {
-                        AssetDatabase.CreateAsset(unitClip.Value.Outp(), ClipPath);
-                    }
-                }
-            }
-            var bb = new BlendTreeBuilderForNDMF(ProjectFolder, ColorChangerRoot, false, AvatarRoot, safeName);
-            bb.rootDBT(() =>
+            ac.DebugSave();
+
+            //DBTの定義
+            var bb = new BlendTreeBuilder(Prj, false, safeName, Prj.RootObject);
+            bb.RootDBT(() =>
             {
                 foreach (var colorParam in ColorParams)
                 {
-                    bb.Param("1").Add1D($@"Pan/UnlimitedColor/{safeName}/{colorParam.eng}", () =>
+                    bb.Param("1").Add1D($@"{safeName}/{colorParam.eng}", () =>
                     {
                         for (int n = -1; n <= 1; n++)
                         {
-                            bb.Param(((float)n + 1) / 2).CM(ac.Clip($@"{safeName}{colorParam.eng}{n}"));
+                            bb.Param((float)n / 2 + .5f).AddMotion(ac.Outp($@"{safeName}{colorParam.eng}{n}"));
                         }
                     });
                 }

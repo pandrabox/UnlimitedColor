@@ -7,7 +7,8 @@
         "nadena.dev.ndmf",
         "nadena.dev.ndmf.vrchat",
         "VRC.SDK3A.Editor",
-        "nadena.dev.ndmf.runtime"
+        "nadena.dev.ndmf.runtime",
+        "com.github.pandrabox.pandravase.runtime"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

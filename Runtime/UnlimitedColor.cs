@@ -4,7 +4,8 @@ using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
-using static com.github.pandrabox.unlimitedcolor.runtime.Generic;
+using static com.github.pandrabox.pandravase.runtime.Util;
+using com.github.pandrabox.pandravase.runtime;
 
 namespace com.github.pandrabox.unlimitedcolor.runtime
 {
@@ -28,59 +29,48 @@ namespace com.github.pandrabox.unlimitedcolor.runtime
 
 
     [CustomEditor(typeof(UnlimitedColor))]
-    public class UnlimitedColorEditor : Editor
+    public class UnlimitedColorEditor : PandraEditor
     {
-        private bool showExMenu = false;
-        private Texture2D _emotePrefabIcoAndLogo;
-        public override void OnInspectorGUI()
-        {
-            if (_emotePrefabIcoAndLogo == null) _emotePrefabIcoAndLogo = AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/com.github.pandrabox.unlimitedcolor/Assets/Ico/minilogo.png");
-            if (_emotePrefabIcoAndLogo != null)
-            {
-                GUILayout.BeginHorizontal();
-                GUILayout.FlexibleSpace();
-                GUILayout.Label(_emotePrefabIcoAndLogo);
-                GUILayout.FlexibleSpace();
-                GUILayout.EndHorizontal();
-                GUILayout.Space(4);
-            }
+        UnlimitedColorEditor() : base(true, "UnlimitedColor", ProjectTypes.VPM) { }
 
+        private SerializedProperty _pSaturationMax, _pValueMax, _pGammaMax, _pRendererGroups, _pExplicit;
+
+        protected sealed override void DefineSerial()
+        {
+            _pSaturationMax = serializedObject.FindProperty(nameof(UnlimitedColor.SaturationMax));
+            _pValueMax = serializedObject.FindProperty(nameof(UnlimitedColor.ValueMax));
+            _pGammaMax = serializedObject.FindProperty(nameof(UnlimitedColor.GammaMax));
+            _pRendererGroups = serializedObject.FindProperty(nameof(UnlimitedColor.RendererGroups));
+            _pExplicit = serializedObject.FindProperty(nameof(UnlimitedColor.Explicit));
+        }
+
+        public sealed override void OnInnerInspectorGUI()
+        {
             serializedObject.Update();
 
             EditorGUILayout.LabelField("UnlimitedColorはlilToonを使ったRendererの色をVRC上で変更可能にするツールです。\n・非常に多くのパラメータを使うため、多数の衣装等を使っているアバターではアップロードできないことがあります(このプレハブを消せば元に戻ります)。\n\n詳細な使い方・アップロードできないときの処置は同梱のHowToUseを御覧下さい。", EditorStyles.wordWrappedLabel);
 
             Title("色調最大値設定");
-            EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(UnlimitedColor.SaturationMax)));
-            EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(UnlimitedColor.ValueMax)));
-            EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(UnlimitedColor.GammaMax)));
+            EditorGUILayout.PropertyField(_pSaturationMax);
+            EditorGUILayout.PropertyField(_pValueMax);
+            EditorGUILayout.PropertyField(_pGammaMax);
             EditorGUILayout.HelpBox("彩度(S)、明度(V)、ガンマ(G)の最大値は標準で2ですが、大きくすることで色幅を増やすことができます。ただしノイズが乗ることがあります。", MessageType.Info);
 
-
-
-
-
             Title("初期値設定");
-
-            var rendererGroupsProperty = serializedObject.FindProperty(nameof(UnlimitedColor.RendererGroups));
-
-            var prop_Explicit = serializedObject.FindProperty(nameof(UnlimitedColor.Explicit));
-            EditorGUILayout.PropertyField(prop_Explicit);
-            if (prop_Explicit.boolValue)
+            EditorGUILayout.PropertyField(_pExplicit);
+            if (_pExplicit.boolValue)
             {
                 EditorGUILayout.HelpBox("現在の設定では、色変更したいRendererをグループ定義する必要があります。\n定義していないものは、変更できません", MessageType.Info);
             }
             else
             {
                 EditorGUILayout.HelpBox("すべてのRendererは色変更できます。不要なものは、OutOfTargetグループに登録して下さい\n※注意：現在、パラメータを多く使用する設定になっています（上のチェックで切り替え）", MessageType.Info);
-                SerializedProperty groupProperty = rendererGroupsProperty.GetArrayElementAtIndex(0);
+                SerializedProperty groupProperty = _pRendererGroups.GetArrayElementAtIndex(0);
                 EditorGUILayout.PropertyField(groupProperty, new GUIContent($"Group {1}"));
             }
 
-
             Title("グルーピング");
-
-            //カスタムグループの描画
-            if (prop_Explicit.boolValue)
+            if (_pExplicit.boolValue)
             {
                 EditorGUILayout.HelpBox("同時に色を変えたいグループを作り、Rendererを登録して下さい。名前は重複しないよう注意してください。", MessageType.Info);
             }
@@ -88,52 +78,37 @@ namespace com.github.pandrabox.unlimitedcolor.runtime
             {
                 EditorGUILayout.HelpBox("同時に色を変えたいグループを作り、Rendererを登録して下さい。名前は重複しないよう注意してください。\nグループ化すると消費パラメータが軽減できます。", MessageType.Info);
             }
-
-            // Buttons for adding and removing RendererGroups
             EditorGUILayout.BeginHorizontal();
             if (GUILayout.Button("+"))
             {
-                rendererGroupsProperty.arraySize++;
-                SerializedProperty newGroup = rendererGroupsProperty.GetArrayElementAtIndex(rendererGroupsProperty.arraySize - 1);
-
-                // Initialize the GroupName and Renderers array in the new RendererGroup
-                SerializedProperty groupName = newGroup.FindPropertyRelative(nameof(RendererGroup.GroupName));
-                SerializedProperty renderers = newGroup.FindPropertyRelative(nameof(RendererGroup.Renderers));
-
-                groupName.stringValue = "";  // Set default group name
-                renderers.arraySize = 0;
+                _pRendererGroups.arraySize++;
+                SerializedProperty pNewGroup = _pRendererGroups.GetArrayElementAtIndex(_pRendererGroups.arraySize - 1);
+                pNewGroup.FindPropertyRelative(nameof(RendererGroup.GroupName)).stringValue = "";
+                pNewGroup.FindPropertyRelative(nameof(RendererGroup.Renderers)).arraySize = 0;
             }
-
             if (GUILayout.Button("-"))
             {
-                if (rendererGroupsProperty.arraySize > 1)
+                if (_pRendererGroups.arraySize > 1)
                 {
-                    rendererGroupsProperty.arraySize--;
+                    _pRendererGroups.arraySize--;
                 }
             }
-            if (rendererGroupsProperty.arraySize <= 1)
-            {
-                rendererGroupsProperty.arraySize = 1;
-            }
-            if (rendererGroupsProperty.arraySize > 0)
-            {
-                var firstGroupProperty = rendererGroupsProperty.GetArrayElementAtIndex(0);
-                firstGroupProperty.FindPropertyRelative(nameof(RendererGroup.GroupName)).stringValue = "OutOfTarget";
-            }
-
+            if (_pRendererGroups.arraySize <= 1) _pRendererGroups.arraySize = 1;
+            _pRendererGroups.GetArrayElementAtIndex(0).FindPropertyRelative(nameof(RendererGroup.GroupName)).stringValue = "OutOfTarget";
             EditorGUILayout.EndHorizontal();
-
-
-
-            for (int i = 1; i < rendererGroupsProperty.arraySize; i++)
+            for (int i = 1; i < _pRendererGroups.arraySize; i++)
             {
-                SerializedProperty groupProperty = rendererGroupsProperty.GetArrayElementAtIndex(i);
+                SerializedProperty groupProperty = _pRendererGroups.GetArrayElementAtIndex(i);
                 EditorGUILayout.PropertyField(groupProperty, new GUIContent($"Group {i + 1}"));
             }
 
-
             Title("未定義のlilToon Renderer");
-            if (prop_Explicit.boolValue)
+            var undefinedRenderers = UndefinedRenderers((UnlimitedColor)target);
+            if(undefinedRenderers == null || undefinedRenderers.Length == 0)
+            {
+                EditorGUILayout.HelpBox("未定義のRendererはありません。", MessageType.Info);
+            }
+            else if (_pExplicit.boolValue)
             {
                 EditorGUILayout.HelpBox("次のRendererは未定義です。Explicit=ONのため、色変更できません", MessageType.Info);
             }
@@ -141,8 +116,6 @@ namespace com.github.pandrabox.unlimitedcolor.runtime
             {
                 EditorGUILayout.HelpBox("次のRendererは未定義です。Explicit=OFFのため、個別色変更可能です", MessageType.Info);
             }
-            var undefinedRenderers = UndefinedRenderers((UnlimitedColor)target);
-
             EditorGUI.indentLevel++;
             foreach(var ur in undefinedRenderers)
             {
@@ -153,14 +126,20 @@ namespace com.github.pandrabox.unlimitedcolor.runtime
 
             serializedObject.ApplyModifiedProperties();
         }
+
+        /// <summary>
+        /// 未定義Rendererの取得
+        /// </summary>
+        /// <param name="ConfigComponent"></param>
+        /// <returns></returns>
         private Renderer[] UndefinedRenderers(UnlimitedColor ConfigComponent)
         {
             // avatarRoot を取得
             Transform avatarRoot = GetAvatarRootTransform(ConfigComponent.transform);
             // avatarRoot 以下全ての Renderer を取得
             List<Renderer> allRenderers = new List<Renderer>(avatarRoot.GetComponentsInChildren<Renderer>());
-            // すべての Renderer に対して isLil を実行し、false の場合はリストから除外
-            allRenderers.RemoveAll(renderer => !isLil(renderer));
+            // すべての Renderer に対して IsLil を実行し、false の場合はリストから除外
+            allRenderers.RemoveAll(renderer => !IsLil(renderer));
             // 定義されている RendererGroups から、既に登録されている Renderer を allRenderers から除外
             RendererGroup[] definedRendererGroups = ConfigComponent.RendererGroups;
             foreach (var rendererGroup in definedRendererGroups)
@@ -172,33 +151,6 @@ namespace com.github.pandrabox.unlimitedcolor.runtime
             }
             // 残った Renderer を配列に変換して返す
             return allRenderers.ToArray();
-        }
-
-        private static void Title(string t)
-        {
-            GUILayout.BeginHorizontal();
-
-            var lineRect = GUILayoutUtility.GetRect(0, EditorGUIUtility.singleLineHeight, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
-            int leftBorderSize = 5;
-            var leftRect = new Rect(lineRect.x, lineRect.y, leftBorderSize, lineRect.height);
-            var rightRect = new Rect(lineRect.x + leftBorderSize, lineRect.y, lineRect.width - leftBorderSize, lineRect.height);
-            Color leftColor = new Color32(0xF4, 0xAD, 0x39, 0xFF);
-            Color rightColor = new Color32(0x39, 0xA7, 0xF4, 0xFF);
-
-            EditorGUI.DrawRect(leftRect, leftColor);
-            EditorGUI.DrawRect(rightRect, rightColor);
-
-            var textStyle = new GUIStyle(EditorStyles.label)
-            {
-                alignment = TextAnchor.MiddleLeft,
-                padding = new RectOffset(5, 0, 0, 0),
-                fontStyle = FontStyle.Bold,
-                normal = { textColor = Color.black },
-            };
-
-            GUI.Label(rightRect, t, textStyle);
-
-            GUILayout.EndHorizontal();
         }
     }
 
