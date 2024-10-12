@@ -160,7 +160,7 @@ namespace com.github.pandrabox.unlimitedcolor.runtime
             // avatarRoot を取得
             Transform avatarRoot = GetAvatarRootTransform(ConfigComponent.transform);
             // avatarRoot 以下全ての Renderer を取得
-            List<Renderer> allRenderers = new List<Renderer>(avatarRoot.GetComponentsInChildren<Renderer>());
+            List<Renderer> allRenderers = new List<Renderer>(avatarRoot.GetComponentsInChildren<Renderer>(true));
             // すべての Renderer に対して IsLil を実行し、false の場合はリストから除外
             allRenderers.RemoveAll(renderer => !IsLil(renderer));
             // 定義されている RendererGroups から、既に登録されている Renderer を allRenderers から除外
