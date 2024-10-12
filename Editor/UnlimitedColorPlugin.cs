@@ -167,7 +167,7 @@ namespace com.github.pandrabox.unlimitedcolor.editor
             if (targetObjNames == null) return;
 
             // メニューのルート定義または取得
-            var menuRoot = Prj.GetOrCreateComponentObject<ModularAvatarMenuItem>("RootMenu", (x) =>
+            var menuRoot = Prj.GetOrCreateComponentObject<ModularAvatarMenuItem>("UnlimitedColor", (x) =>
             {
                 x.gameObject.AddComponent<ModularAvatarMenuInstaller>();
                 x.Control.name = "UnlimitedColor";
