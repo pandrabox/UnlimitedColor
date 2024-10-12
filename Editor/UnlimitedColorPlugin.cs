@@ -13,6 +13,7 @@ using com.github.pandrabox.unlimitedcolor.editor;
 using com.github.pandrabox.pandravase.editor;
 using com.github.pandrabox.pandravase.runtime;
 using static com.github.pandrabox.pandravase.runtime.Util;
+using JetBrains.Annotations;
 
 [assembly: ExportsPlugin(typeof(UnlimitedColorPass))]
 
@@ -20,16 +21,21 @@ namespace com.github.pandrabox.unlimitedcolor.editor
 {
     public class UnlimitedColorPass : Plugin<UnlimitedColorPass>
     {
+        public override string DisplayName => "UnlimitedColor";
+        public override string QualifiedName => "com.github.pandrabox.unlimitedcolor";
         protected override void Configure()
         {
-            InPhase(BuildPhase.Transforming).BeforePlugin("nadena.dev.modular-avatar").Run("UnlimitedColor", ctx =>
-            {
-                //Debug.LogWarning("aaaa");
-                UnlimitedColor tgt = ctx.AvatarRootTransform.GetComponentInChildren<UnlimitedColor>(false);
-                if (tgt == null) return;
-                new UnlimitedColorMain(tgt);
+            InPhase(BuildPhase.Transforming)
+                .BeforePlugin("nadena.dev.modular-avatar")
+                .BeforePlugin("com.github.pandrabox.pandravase.mergeblendtree")
+                .Run("UnlimitedColor", ctx =>
+                {
+                    //Debug.LogWarning("aaaa");
+                    UnlimitedColor tgt = ctx.AvatarRootTransform.GetComponentInChildren<UnlimitedColor>(false);
+                    if (tgt == null) return;
+                    new UnlimitedColorMain(tgt);
 
-            });
+                });
         }
     }
 
@@ -66,7 +72,7 @@ namespace com.github.pandrabox.unlimitedcolor.editor
             };
             Run();
 
-            new PanMergeBlendTreePlugin(Prj.RootObject);
+            //new PanMergeBlendTreePlugin(Prj.RootObject);
         }
         public void Run()
         {
