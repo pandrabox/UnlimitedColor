@@ -27,14 +27,12 @@ namespace com.github.pandrabox.unlimitedcolor.editor
         {
             InPhase(BuildPhase.Transforming)
                 .BeforePlugin("nadena.dev.modular-avatar")
-                .BeforePlugin("com.github.pandrabox.pandravase.mergeblendtree")
+                .BeforePlugin("com.github.pandrabox.pandravase")
                 .Run("UnlimitedColor", ctx =>
                 {
-                    //Debug.LogWarning("aaaa");
                     UnlimitedColor tgt = ctx.AvatarRootTransform.GetComponentInChildren<UnlimitedColor>(false);
                     if (tgt == null) return;
                     new UnlimitedColorMain(tgt);
-
                 });
         }
     }
