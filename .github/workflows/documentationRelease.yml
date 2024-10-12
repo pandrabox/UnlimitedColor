@@ -1,0 +1,27 @@
+name: Deploy GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Copy documentation to gh-pages
+      run: |
+        git config --global user.name 'github-actions[bot]'
+        git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+        cp Documentation~/HowToUse.md ./HowToUse.md
+
+    - name: Deploy to GitHub Pages
+      run: |
+        git checkout --orphan gh-pages
+        git --work-tree=./ add --all
+        git commit -m 'Deploy GitHub Pages'
+        git push -f origin gh-pages
