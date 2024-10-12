@@ -6,6 +6,7 @@ using UnityEditor;
 using UnityEngine;
 using static com.github.pandrabox.pandravase.runtime.Util;
 using com.github.pandrabox.pandravase.runtime;
+using System.Linq;
 
 namespace com.github.pandrabox.unlimitedcolor.runtime
 {
@@ -44,17 +45,41 @@ namespace com.github.pandrabox.unlimitedcolor.runtime
             _pExplicit = serializedObject.FindProperty(nameof(UnlimitedColor.Explicit));
         }
 
+        /// <summary>
+        /// パラメータを消費するグループ数のカウント
+        /// </summary>
+        /// <returns></returns>
+        private int EnableGroupCount()
+        {
+            RendererGroup[] groups = ((UnlimitedColor)target).RendererGroups;
+            int c = 0;
+            foreach (RendererGroup group in groups)
+            {
+                if (group.GroupName == "OutOfTarget") continue;
+                if (group.Renderers.Any(IsLil)) c++;
+            }
+            return c;
+        }
+
         public sealed override void OnInnerInspectorGUI()
         {
             serializedObject.Update();
 
-            EditorGUILayout.LabelField("UnlimitedColorはlilToonを使ったRendererの色をVRC上で変更可能にするツールです。\n・非常に多くのパラメータを使うため、多数の衣装等を使っているアバターではアップロードできないことがあります(このプレハブを消せば元に戻ります)。\n\n詳細な使い方・アップロードできないときの処置は同梱のHowToUseを御覧下さい。", EditorStyles.wordWrappedLabel);
+            EditorGUILayout.LabelField("UnlimitedColorはlilToonを使ったRendererの色をVRC上で変更可能にするツールです。\n多くのパラメータを使うため、衣装や小物が多いアバターではアップロードできないことがあります。このプレハブを消せば元に戻るので、困ったら消して下さい。\n\n詳細な使い方・アップロードできないときの処置は同梱のHowToUseを御覧下さい。", EditorStyles.wordWrappedLabel);
+
+            Title("使用Bit数");
+            var undefinedRenderers = UndefinedRenderers((UnlimitedColor)target);
+            int paramnum = _pExplicit.boolValue ? 0 : undefinedRenderers.Length*4*8;
+            paramnum += EnableGroupCount() * 4 * 8;
+            if (paramnum > 256) EditorGUILayout.HelpBox("VRCの上限を超えるパラメータを使っています。アップロードのためにはVRCFury Parameter Comressorが必要です", MessageType.Error);
+            else if (paramnum > 128) EditorGUILayout.HelpBox("多くのパラメータを使っています。他のギミックとの相性次第でアップロードできないかもしれません", MessageType.Warning);
+            EditorGUILayout.IntField(paramnum);
 
             Title("色調最大値設定");
+            EditorGUILayout.HelpBox("彩度(S)、明度(V)、ガンマ(G)の最大値は標準で2ですが、大きくすることで色幅を増やすことができます。ただしノイズが乗ることがあります。", MessageType.Info);
             EditorGUILayout.PropertyField(_pSaturationMax);
             EditorGUILayout.PropertyField(_pValueMax);
             EditorGUILayout.PropertyField(_pGammaMax);
-            EditorGUILayout.HelpBox("彩度(S)、明度(V)、ガンマ(G)の最大値は標準で2ですが、大きくすることで色幅を増やすことができます。ただしノイズが乗ることがあります。", MessageType.Info);
 
             Title("初期値設定");
             EditorGUILayout.PropertyField(_pExplicit);
@@ -103,7 +128,6 @@ namespace com.github.pandrabox.unlimitedcolor.runtime
             }
 
             Title("未定義のlilToon Renderer");
-            var undefinedRenderers = UndefinedRenderers((UnlimitedColor)target);
             if(undefinedRenderers == null || undefinedRenderers.Length == 0)
             {
                 EditorGUILayout.HelpBox("未定義のRendererはありません。", MessageType.Info);
