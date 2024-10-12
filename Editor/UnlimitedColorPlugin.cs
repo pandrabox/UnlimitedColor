@@ -13,7 +13,6 @@ using com.github.pandrabox.unlimitedcolor.editor;
 using com.github.pandrabox.pandravase.editor;
 using com.github.pandrabox.pandravase.runtime;
 using static com.github.pandrabox.pandravase.runtime.Util;
-using JetBrains.Annotations;
 
 [assembly: ExportsPlugin(typeof(UnlimitedColorPass))]
 
@@ -69,8 +68,6 @@ namespace com.github.pandrabox.unlimitedcolor.editor
                 new ColorParam("Gamma", "ガンマ")
             };
             Run();
-
-            //new PanMergeBlendTreePlugin(Prj.RootObject);
         }
         public void Run()
         {

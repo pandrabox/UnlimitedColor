@@ -1,13 +1,4 @@
-﻿
-#if UNITY_EDITOR
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using UnityEditor;
-using UnityEngine;
-using com.github.pandrabox.pandravase.runtime;
-using static com.github.pandrabox.pandravase.runtime.Global;
-using static com.github.pandrabox.pandravase.runtime.Util;
+﻿#if UNITY_EDITOR
 
 namespace com.github.pandrabox.unlimitedcolor.runtime
 {

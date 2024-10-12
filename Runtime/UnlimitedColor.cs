@@ -1,5 +1,4 @@
-﻿
-#if UNITY_EDITOR
+﻿#if UNITY_EDITOR
 using System;
 using System.Collections.Generic;
 using UnityEditor;
@@ -69,7 +68,7 @@ namespace com.github.pandrabox.unlimitedcolor.runtime
 
             Title("使用Bit数");
             var undefinedRenderers = UndefinedRenderers((UnlimitedColor)target);
-            int paramnum = _pExplicit.boolValue ? 0 : undefinedRenderers.Length*4*8;
+            int paramnum = _pExplicit.boolValue ? 0 : undefinedRenderers.Length * 4 * 8;
             paramnum += EnableGroupCount() * 4 * 8;
             if (paramnum > 256) EditorGUILayout.HelpBox("VRCの上限を超えるパラメータを使っています。アップロードのためにはVRCFury Parameter Comressorが必要です", MessageType.Error);
             else if (paramnum > 128) EditorGUILayout.HelpBox("多くのパラメータを使っています。他のギミックとの相性次第でアップロードできないかもしれません", MessageType.Warning);
@@ -128,7 +127,7 @@ namespace com.github.pandrabox.unlimitedcolor.runtime
             }
 
             Title("未定義のlilToon Renderer");
-            if(undefinedRenderers == null || undefinedRenderers.Length == 0)
+            if (undefinedRenderers == null || undefinedRenderers.Length == 0)
             {
                 EditorGUILayout.HelpBox("未定義のRendererはありません。", MessageType.Info);
             }
@@ -141,7 +140,7 @@ namespace com.github.pandrabox.unlimitedcolor.runtime
                 EditorGUILayout.HelpBox("次のRendererは未定義です。Explicit=OFFのため、個別色変更可能です", MessageType.Info);
             }
             EditorGUI.indentLevel++;
-            foreach(var ur in undefinedRenderers)
+            foreach (var ur in undefinedRenderers)
             {
                 EditorGUILayout.ObjectField(ur, typeof(Renderer), allowSceneObjects: true);
             }
@@ -222,7 +221,7 @@ namespace com.github.pandrabox.unlimitedcolor.runtime
             }
             EditorGUI.indentLevel++;
             position.y += EditorGUIUtility.singleLineHeight;
-            for (int i = 0; i < Renderers.arraySize; i++) 
+            for (int i = 0; i < Renderers.arraySize; i++)
             {
                 Rect line = new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight);
                 EditorGUI.PropertyField(line, Renderers.GetArrayElementAtIndex(i), GUIContent.none);
@@ -237,7 +236,7 @@ namespace com.github.pandrabox.unlimitedcolor.runtime
         {
             SerializedProperty Renderers = property.FindPropertyRelative(nameof(RendererGroup.Renderers));
             float lineHeight = EditorGUIUtility.singleLineHeight;
-            return lineHeight * (Renderers.arraySize + 1) +.1f;
+            return lineHeight * (Renderers.arraySize + 1) + .1f;
         }
     }
 }
