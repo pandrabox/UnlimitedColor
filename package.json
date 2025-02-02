@@ -1,6 +1,6 @@
 {
   "name": "com.github.pandrabox.unlimitedcolor",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "displayName": "UnlimitedColor",
   "author": {
     "name": "pandra"
@@ -8,7 +8,7 @@
   "unity": "2019.4",
   "description": "Launch liltoon's color correction function from VRC's ExpressionMenu",
   "vpmDependencies": {
-    "com.github.pandrabox.pandravase": ">=1.1.0",
+    "com.github.pandrabox.pandravase": ">=1.1.0 <2.0.0",
     "com.vrchat.avatars": ">=3.4.0",
     "nadena.dev.modular-avatar": ">=1.9.0",
     "jp.lilxyzw.liltoon": ">=1.0.0"
